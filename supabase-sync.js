@@ -80,6 +80,7 @@
       const { error } = await supa.auth.signInWithPassword({email:els.email.value.trim(), password:els.password.value});
       if (error) throw error;
       await refreshSession();
+      await autoDownloadOnStart(true);
     } catch (error) { setStatus(`ログイン失敗：${error.message}`, 'error'); }
   }
 
@@ -131,28 +132,42 @@
     } catch (error) { setStatus(`ダウンロード失敗：${error.message}`, 'error'); }
   }
 
-  async function autoDownloadOnStart(){
+  let lastAutoSyncAt=0;
+  let syncing=false;
+  async function autoDownloadOnStart(force=false){
+    if(syncing)return;
+    if(!force && Date.now()-lastAutoSyncAt<60000)return;
+    syncing=true;
     try{
       await window.tcDashboard.ready;
       const supa=await ensureClient();
       const {data}=await supa.auth.getSession();
       const user=data.session?.user;
-      if(!user) return;
-      setStatus(`ログイン中：${user.email}・同期確認中…`);
+      if(!user)return;
+      setStatus(`ログイン中：${user.email}・最新データ確認中…`);
       const {data:file,error}=await supa.storage.from(BUCKET).download(`${user.id}/${FILE_NAME}`);
       if(error){
-        // 初回アップロード前の404等は画面を壊さず、同期画面で確認できるようにします。
         console.warn('自動同期をスキップしました',error.message);
         setStatus(`ログイン中：${user.email}`, 'success');
         return;
       }
       const parsed=JSON.parse(await file.text());
-      await window.tcDashboard.setState(parsed);
-      setStatus(`ログイン中：${user.email}・最新データ同期済み`, 'success');
+      const local=window.tcDashboard.getState?.()||{};
+      const cloudTime=new Date(parsed.cloudUpdatedAt||parsed.exportedAt||0).getTime();
+      const localTime=new Date(local.cloudUpdatedAt||local.exportedAt||0).getTime();
+      if(force || !local.products?.length || cloudTime>=localTime){
+        await window.tcDashboard.setState(parsed);
+        setStatus(`ログイン中：${user.email}・最新データ同期済み`, 'success');
+      }else{
+        setStatus(`ログイン中：${user.email}・端末データが最新です`, 'success');
+      }
+      lastAutoSyncAt=Date.now();
     }catch(error){
-      console.warn('起動時自動同期エラー',error);
-    }
+      console.warn('自動同期エラー',error);
+      setStatus(`自動同期失敗：${error.message}`, 'error');
+    }finally{syncing=false}
   }
+
 
   els.cloudBtn.addEventListener('click', async () => { loadConfig(); els.dialog.showModal(); await refreshSession(); });
   els.close.addEventListener('click', () => els.dialog.close());
@@ -164,6 +179,8 @@
   els.upload.addEventListener('click', upload);
   els.download.addEventListener('click', download);
 
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')autoDownloadOnStart();});
+  window.addEventListener('online',()=>autoDownloadOnStart(true));
   loadConfig();
   autoDownloadOnStart();
 })();
