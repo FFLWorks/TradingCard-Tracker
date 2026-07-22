@@ -53,8 +53,7 @@
 
   async function ensureClient() {
     if (client) return client;
-    const config = loadConfig();
-    if (!config.url || !config.key) throw new Error('先にSupabase接続情報を保存してください');
+    loadConfig();
     return createClientFromForm();
   }
 
@@ -125,10 +124,34 @@
       const { data, error } = await supa.storage.from(BUCKET).download(`${user.id}/${FILE_NAME}`);
       if (error) throw error;
       const parsed = JSON.parse(await data.text());
-      window.tcDashboard.setState(parsed);
+      await window.tcDashboard.ready;
+      await window.tcDashboard.setState(parsed);
       setStatus('最新データを読み込みました', 'success');
       els.dialog.close();
     } catch (error) { setStatus(`ダウンロード失敗：${error.message}`, 'error'); }
+  }
+
+  async function autoDownloadOnStart(){
+    try{
+      await window.tcDashboard.ready;
+      const supa=await ensureClient();
+      const {data}=await supa.auth.getSession();
+      const user=data.session?.user;
+      if(!user) return;
+      setStatus(`ログイン中：${user.email}・同期確認中…`);
+      const {data:file,error}=await supa.storage.from(BUCKET).download(`${user.id}/${FILE_NAME}`);
+      if(error){
+        // 初回アップロード前の404等は画面を壊さず、同期画面で確認できるようにします。
+        console.warn('自動同期をスキップしました',error.message);
+        setStatus(`ログイン中：${user.email}`, 'success');
+        return;
+      }
+      const parsed=JSON.parse(await file.text());
+      await window.tcDashboard.setState(parsed);
+      setStatus(`ログイン中：${user.email}・最新データ同期済み`, 'success');
+    }catch(error){
+      console.warn('起動時自動同期エラー',error);
+    }
   }
 
   els.cloudBtn.addEventListener('click', async () => { loadConfig(); els.dialog.showModal(); await refreshSession(); });
@@ -142,4 +165,5 @@
   els.download.addEventListener('click', download);
 
   loadConfig();
+  autoDownloadOnStart();
 })();

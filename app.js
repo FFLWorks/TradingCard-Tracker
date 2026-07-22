@@ -1,4 +1,43 @@
-const STORAGE_KEY = 'tc_dashboard_mobile_data_v1';
+const STORAGE_KEY = 'tc_dashboard_mobile_data_v1'; // 旧localStorageからの移行専用
+const DB_NAME = 'trading_card_dashboard';
+const DB_VERSION = 1;
+const STORE_NAME = 'dashboard';
+const STATE_ID = 'current';
+
+function openDashboardDB(){
+  return new Promise((resolve,reject)=>{
+    const request=indexedDB.open(DB_NAME,DB_VERSION);
+    request.onupgradeneeded=()=>{
+      const db=request.result;
+      if(!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
+    };
+    request.onsuccess=()=>resolve(request.result);
+    request.onerror=()=>reject(request.error || new Error('IndexedDBを開けませんでした'));
+  });
+}
+
+async function idbGet(key){
+  const db=await openDashboardDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(STORE_NAME,'readonly');
+    const request=tx.objectStore(STORE_NAME).get(key);
+    request.onsuccess=()=>resolve(request.result ?? null);
+    request.onerror=()=>reject(request.error || new Error('保存データを読み込めませんでした'));
+    tx.oncomplete=()=>db.close();
+  });
+}
+
+async function idbSet(key,value){
+  const db=await openDashboardDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(STORE_NAME,'readwrite');
+    tx.objectStore(STORE_NAME).put(value,key);
+    tx.oncomplete=()=>{ db.close(); resolve(); };
+    tx.onerror=()=>{ db.close(); reject(tx.error || new Error('データを保存できませんでした')); };
+    tx.onabort=()=>{ db.close(); reject(tx.error || new Error('データ保存が中断されました')); };
+  });
+}
+
 
 const els = {
   importBtn: document.getElementById('importBtn'),
@@ -51,13 +90,24 @@ const els = {
 
 let state = null;
 
+let resolveReady;
+const ready = new Promise(resolve => { resolveReady = resolve; });
+
 window.tcDashboard = {
   getState: () => state,
-  setState: (nextState) => {
-    state = normalize(nextState);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  setState: async (nextState) => {
+    const normalized = normalize(nextState);
+    await idbSet(STATE_ID, normalized);
+    state = normalized;
+    render();
+    return state;
+  },
+  clearState: async () => {
+    await idbSet(STATE_ID, null);
+    state = null;
     render();
   },
+  ready,
   render: () => render()
 };
 
@@ -442,9 +492,7 @@ function escapeAttr(value){ return escapeHtml(value); }
 async function importFile(file){
   try{
     const text = await file.text();
-    state = normalize(JSON.parse(text));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    render();
+    await window.tcDashboard.setState(JSON.parse(text));
   }catch(err){
     alert(`読み込みに失敗しました。\n${err.message}`);
   }
@@ -468,12 +516,30 @@ els.dialog.addEventListener('click',e=>{
   if(e.target === els.dialog) els.dialog.close();
 });
 
-try{
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if(saved) state = JSON.parse(saved);
-}catch{}
+async function initializeDashboard(){
+  try{
+    const saved = await idbGet(STATE_ID);
+    if(saved) {
+      state = normalize(saved);
+    } else {
+      // v2以前の小さな保存データがある場合だけIndexedDBへ移行します。
+      const legacy = localStorage.getItem(STORAGE_KEY);
+      if(legacy){
+        state = normalize(JSON.parse(legacy));
+        await idbSet(STATE_ID,state);
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+  }catch(error){
+    console.error('初期データ読込エラー',error);
+  }finally{
+    render();
+    resolveReady();
+    window.dispatchEvent(new CustomEvent('tc-dashboard-ready'));
+  }
+}
 
-render();
+initializeDashboard();
 
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   navigator.serviceWorker.register('service-worker.js').catch(()=>{});

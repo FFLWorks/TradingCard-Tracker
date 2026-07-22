@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#111827">
-  <title>TradingCard Dashboard</title>
+  <title>TradingCard Dashboard v3.0</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -25,7 +25,7 @@
     <section id="emptyState" class="empty">
       <div class="empty-icon">📦</div>
       <h2>データを読み込んで開始</h2>
-      <p>PC版から書き出したJSONバックアップを選択してください。</p>
+      <p>PCではJSONを読み込み、スマホではクラウド同期から自動取得できます。</p>
       <button id="emptyImportBtn" class="primary large">JSONを選択</button>
     </section>
 
@@ -191,7 +191,7 @@
         <button id="cloudUpload" class="primary">現在データをアップロード</button>
         <button id="cloudDownload" class="secondary">最新データをダウンロード</button>
       </div>
-      <p class="cloud-note">PCではこのページを開いてJSONを読み込み、「アップロード」。スマホでは「ダウンロード」だけで更新できます。</p>
+      <p class="cloud-note">PCではこのページを開いてJSONを読み込み、「アップロード」。スマホはログイン済みなら起動時に自動同期します。手動更新も可能です。</p>
     </div>
   </dialog>
 
