@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <title>TradingCard Dashboard</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">PRIVATE ASSET DASHBOARD</p>
+      <h1>トレカ資産</h1>
+    </div>
+    <div class="top-actions">
+      <button id="cloudBtn" class="secondary">☁ クラウド同期</button>
+      <button id="importBtn" class="primary">JSONを読み込む</button>
+    </div>
+    <input id="fileInput" type="file" accept=".json,application/json" hidden>
+  </header>
+
+  <main>
+    <section id="emptyState" class="empty">
+      <div class="empty-icon">📦</div>
+      <h2>データを読み込んで開始</h2>
+      <p>PC版から書き出したJSONバックアップを選択してください。</p>
+      <button id="emptyImportBtn" class="primary large">JSONを選択</button>
+    </section>
+
+    <div id="app" hidden>
+      <section class="hero card">
+        <div>
+          <p class="label">総資産</p>
+          <p id="totalAsset" class="hero-value">¥0</p>
+          <p id="lastUpdated" class="muted">最終更新 —</p>
+        </div>
+        <div class="goal-wrap">
+          <div class="goal-head">
+            <span>目標達成率</span>
+            <strong id="goalPercent">0%</strong>
+          </div>
+          <div class="progress"><div id="goalBar"></div></div>
+          <p id="goalText" class="muted">目標 ¥0</p>
+        </div>
+      </section>
+
+      <section class="stats-grid">
+        <article class="card stat">
+          <span>評価損益</span>
+          <strong id="profitValue">¥0</strong>
+        </article>
+        <article class="card stat">
+          <span>利益率</span>
+          <strong id="profitRate">0%</strong>
+        </article>
+        <article class="card stat">
+          <span>保有点数</span>
+          <strong id="totalQty">0</strong>
+        </article>
+        <article class="card stat">
+          <span>お気に入り</span>
+          <strong id="favoriteCount">0</strong>
+        </article>
+      </section>
+
+
+      <section class="insights-grid">
+        <article class="card insight-card">
+          <div class="section-head"><h2>前日比</h2><span class="muted">総資産</span></div>
+          <strong id="dailyChange" class="insight-value">—</strong>
+          <p id="dailyChangeRate" class="muted">比較データなし</p>
+        </article>
+        <article class="card insight-card">
+          <div class="section-head"><h2>最大保有</h2><span class="muted">資産額</span></div>
+          <strong id="largestHolding" class="insight-name">—</strong>
+          <p id="largestHoldingValue" class="muted">—</p>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="card panel">
+          <div class="section-head"><h2>資産ランキング</h2><span class="muted">TOP 5</span></div>
+          <div id="assetRanking" class="ranking-list"></div>
+        </article>
+        <article class="card panel">
+          <div class="section-head"><h2>価格変動</h2><span class="muted">直近履歴</span></div>
+          <div id="moversList" class="ranking-list"></div>
+        </article>
+      </section>
+
+      <section class="card panel portfolio-chart-panel">
+        <div class="section-head"><h2>総資産推移</h2><span id="portfolioPeriod" class="muted">履歴</span></div>
+        <canvas id="portfolioChart" width="760" height="280"></canvas>
+        <p id="portfolioSummary" class="muted history-summary"></p>
+      </section>
+
+      <section class="card panel allocation-panel">
+        <div class="section-head"><h2>資産構成</h2><span class="muted">カード種別</span></div>
+        <div id="allocationList" class="allocation-list"></div>
+      </section>
+
+      <section class="dashboard-grid analysis-grid">
+        <article class="card panel">
+          <div class="section-head"><h2>利益ランキング</h2><span class="muted">TOP 5</span></div>
+          <div id="profitRanking" class="ranking-list"></div>
+        </article>
+        <article class="card panel">
+          <div class="section-head"><h2>含み損ランキング</h2><span class="muted">要確認</span></div>
+          <div id="lossRanking" class="ranking-list"></div>
+        </article>
+      </section>
+
+      <section class="card panel decision-panel">
+        <div class="section-head"><h2>売却サポート</h2><span class="muted">自動判定</span></div>
+        <div id="decisionSummary" class="decision-summary"></div>
+        <div id="sellCandidates" class="candidate-list"></div>
+      </section>
+
+      <section class="card panel ai-panel">
+        <div class="section-head"><h2>データ分析メモ</h2><span class="muted">自動生成</span></div>
+        <div id="analysisMemo" class="analysis-memo"></div>
+      </section>
+
+      <section class="controls card">
+        <input id="searchInput" type="search" placeholder="商品名で検索">
+        <select id="typeFilter">
+          <option value="">すべてのカード</option>
+        </select>
+        <select id="sortSelect">
+          <option value="asset-desc">資産額が高い順</option>
+          <option value="profit-desc">利益額が高い順</option>
+          <option value="rate-desc">利益率が高い順</option>
+          <option value="name-asc">商品名順</option>
+        </select>
+        <label class="check"><input id="favoriteOnly" type="checkbox"> お気に入りのみ</label>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>保有一覧</h2>
+          <span id="resultCount" class="muted">0件</span>
+        </div>
+        <div id="productList" class="product-list"></div>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="detailDialog">
+    <div class="dialog-inner">
+      <button id="closeDialog" class="close" aria-label="閉じる">×</button>
+      <img id="detailImage" alt="" hidden>
+      <h2 id="detailName"></h2>
+      <p id="detailMeta" class="muted"></p>
+      <div id="detailStats" class="detail-grid"></div>
+      <section id="historySection" class="history-section" hidden>
+        <h3>価格推移</h3>
+        <canvas id="priceChart" width="640" height="260"></canvas>
+        <p id="historySummary" class="muted history-summary"></p>
+      </section>
+      <p id="detailMemo" class="memo"></p>
+      <a id="detailLink" class="primary link-btn" target="_blank" rel="noopener" hidden>商品ページを開く</a>
+    </div>
+  </dialog>
+
+  <dialog id="cloudDialog">
+    <div class="dialog-inner cloud-dialog-inner">
+      <button id="closeCloudDialog" class="close" aria-label="閉じる">×</button>
+      <h2>Supabaseクラウド同期</h2>
+      <p class="muted">同じアカウントでPCとスマホからログインすると、最新バックアップを共有できます。</p>
+
+      <div class="cloud-form">
+        <label>Project URL<input id="supabaseUrl" type="url" placeholder="https://xxxxx.supabase.co"></label>
+        <label>Publishable key<input id="supabaseKey" type="password" placeholder="sb_publishable_... または anon key"></label>
+        <button id="saveCloudConfig" class="secondary full">接続情報を保存</button>
+      </div>
+
+      <div class="cloud-form auth-form">
+        <label>メールアドレス<input id="cloudEmail" type="email" autocomplete="email"></label>
+        <label>パスワード<input id="cloudPassword" type="password" autocomplete="current-password"></label>
+        <div class="cloud-actions">
+          <button id="cloudSignIn" class="primary">ログイン</button>
+          <button id="cloudSignUp" class="secondary">新規登録</button>
+          <button id="cloudSignOut" class="ghost">ログアウト</button>
+        </div>
+      </div>
+
+      <div id="cloudStatus" class="cloud-status">未接続</div>
+      <div class="cloud-actions sync-actions">
+        <button id="cloudUpload" class="primary">現在データをアップロード</button>
+        <button id="cloudDownload" class="secondary">最新データをダウンロード</button>
+      </div>
+      <p class="cloud-note">PCではこのページを開いてJSONを読み込み、「アップロード」。スマホでは「ダウンロード」だけで更新できます。</p>
+    </div>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+  <script src="supabase-sync.js"></script>
+</body>
+</html>
