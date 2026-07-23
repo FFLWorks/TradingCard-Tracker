@@ -1,202 +1,1565 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#111827">
-  <title>TradingCard Dashboard v3.2</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <title>Card Nexus</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Card Nexus" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <style>
+    :root{
+      --bg:#f3f4f6;--panel:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;
+      --accent:#2563eb;--danger:#dc2626;--ok:#059669;--warn:#d97706;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",sans-serif;background:var(--bg);color:var(--text)}
+    button,input,select,textarea{font:inherit}
+    .app{max-width:1100px;margin:0 auto;padding:16px 14px 90px}
+    .topbar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:16px}
+    .topbar h1{font-size:22px;margin:0}
+    .pill{font-size:12px;color:var(--muted);background:#eef2ff;padding:6px 10px;border-radius:999px}
+    .top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .mode-switch{display:flex;background:#e5e7eb;border-radius:12px;padding:3px;gap:2px}
+    .mode-switch button{border:0;background:transparent;color:var(--muted);padding:7px 10px;border-radius:9px;font-size:12px;font-weight:700}
+    .mode-switch button.active{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+    nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(6,1fr);z-index:10;padding-bottom:env(safe-area-inset-bottom)}
+    nav button{border:0;background:#fff;padding:12px 4px;color:var(--muted);font-size:12px}
+    nav button.active{color:var(--accent);font-weight:700}
+    .view{display:none}.view.active{display:block}
+    .grid{display:grid;gap:12px}
+    .grid.kpi{grid-template-columns:repeat(2,minmax(0,1fr))}
+    @media(min-width:760px){.grid.kpi{grid-template-columns:repeat(4,1fr)}.two{grid-template-columns:1fr 1fr}}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .kpi-label{font-size:12px;color:var(--muted)}
+    .kpi-value{font-size:24px;font-weight:800;margin-top:5px}
+    .sub{font-size:12px;color:var(--muted);margin-top:4px}
+    .positive{color:var(--ok)}.negative{color:var(--danger)}
+    .section-title{display:flex;justify-content:space-between;align-items:center;margin:18px 0 10px}
+    .section-title h2{font-size:17px;margin:0}
+    .btn{border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:700}
+    .btn.secondary{background:#fff;color:var(--text);border:1px solid var(--line)}
+    .btn.danger{background:var(--danger)}
+    .btn.small{padding:7px 10px;font-size:12px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+    .row:last-child{border-bottom:0}
+    .row-title{font-weight:700}
+    .row-meta{font-size:12px;color:var(--muted);margin-top:3px}
+    .right{text-align:right}
+    .price{font-weight:800}
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
+    input,select,textarea{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:11px;background:#fff}
+    textarea{min-height:80px;resize:vertical}
+    .form-grid{display:grid;gap:12px;grid-template-columns:1fr}
+    @media(min-width:700px){.form-grid.two-col{grid-template-columns:1fr 1fr}}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .update-box{max-width:620px;margin:0 auto}
+    .big-input{font-size:28px;font-weight:800;text-align:right}
+    .progress{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden}
+    .progress>div{height:100%;background:var(--accent)}
+    .muted{color:var(--muted)}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
+    th{color:var(--muted);font-weight:600}
+    canvas{width:100%;height:260px;background:#fff;border-radius:12px}
+    .empty{padding:30px 10px;text-align:center;color:var(--muted)}
+    .status{font-size:12px;padding:3px 7px;border-radius:999px;background:#f3f4f6}
+    .warning{background:#fff7ed;color:#9a3412}
+    .modal{position:fixed;inset:0;background:rgba(17,24,39,.45);display:none;align-items:flex-end;justify-content:center;z-index:30}
+    .modal.open{display:flex}
+    .sheet{background:#fff;width:100%;max-width:720px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px}
+    @media(min-width:760px){.modal{align-items:center}.sheet{border-radius:20px}}
+    .sheet-head{display:flex;justify-content:space-between;align-items:center}
+    .close{border:0;background:#f3f4f6;border-radius:999px;width:36px;height:36px}
+    .note{font-size:12px;background:#eff6ff;color:#1e40af;padding:10px;border-radius:10px}
+    .ai-hero{background:linear-gradient(135deg,#111827,#312e81);color:#fff;border:0}
+    .ai-hero .sub{color:#c7d2fe}
+    .ai-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px}
+    @media(min-width:760px){.ai-grid{grid-template-columns:repeat(3,1fr)}}
+    .analysis-section{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+    .analysis-section h3{font-size:15px;margin:0 0 8px}
+    .analysis-item{padding:9px 10px;border-radius:10px;background:#f9fafb;margin:7px 0;line-height:1.55}
+    .signal-buy{background:#ecfdf5;color:#065f46}.signal-hold{background:#eff6ff;color:#1e40af}.signal-sell{background:#fff7ed;color:#9a3412}.signal-risk{background:#fef2f2;color:#991b1b}
+    .inline-check{display:flex;align-items:center;gap:8px;color:var(--text);font-size:14px}.inline-check input{width:auto}
+    .favorite{border:0;background:transparent;font-size:24px;cursor:pointer;padding:4px;color:#d1d5db}.favorite.on{color:#f59e0b}
+    .drag-handle{cursor:grab;user-select:none;font-size:21px;color:#9ca3af;padding:8px 5px}.dragging{opacity:.45}
+    .product-thumb{width:58px;height:58px;border-radius:10px;object-fit:cover;background:#f3f4f6;border:1px solid var(--line);flex:0 0 auto}
+    .product-main{display:flex;gap:10px;align-items:center;min-width:0;flex:1}
+    .image-drop{border:2px dashed #cbd5e1;border-radius:14px;min-height:170px;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;background:#f8fafc;cursor:pointer;overflow:hidden}
+    .image-drop.active{border-color:var(--accent);background:#eff6ff}.image-drop img{max-width:100%;max-height:240px;border-radius:10px}
+    .tabs{display:flex;gap:8px;overflow:auto;margin-bottom:12px}.tab{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:8px 12px;border-radius:999px}.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(min-width:760px){.detail-grid{grid-template-columns:repeat(4,1fr)}}
+    .detail-image{width:100%;max-height:300px;object-fit:contain;border-radius:14px;background:#f8fafc}
+    .warning-box{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;padding:12px;border-radius:12px}
+    .chart-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+    .custom-range{display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    .custom-range.open{display:grid}
+    @media(min-width:760px){.chart-controls{grid-template-columns:repeat(4,minmax(0,1fr))}}
+    .breakdown-grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:760px){.breakdown-grid{grid-template-columns:1fr 1fr}}
+    .breakdown-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .breakdown-chip{background:#f3f4f6;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:13px}
+    .chart-wrap{position:relative}
+    .chart-tooltip{position:absolute;display:none;pointer-events:none;background:#111827;color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.45;z-index:5;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.2);transform:translate(-50%,-110%)}
+    .link-button{border:0;background:transparent;padding:0;color:inherit;font:inherit;font-weight:inherit;text-align:left;cursor:pointer}.link-button:hover{text-decoration:underline;color:var(--accent)}
+    input::placeholder{color:#9ca3af;opacity:1}.sale-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media(min-width:760px){.sale-summary{grid-template-columns:repeat(4,minmax(0,1fr))}}
+    .app-title-button{border:0;background:transparent;padding:0;color:inherit;font:inherit;font-weight:inherit;cursor:pointer;text-align:left}.app-title-button:hover{color:var(--accent)}
+    .product-tools{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px}
+    .net-highlight{color:var(--ok);font-weight:800}
+    .mode-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 7px;border-radius:999px;background:#ecfdf5;color:#065f46;margin-left:5px}
+    @media(max-width:759px){.app{padding-left:10px;padding-right:10px}.topbar{align-items:flex-start}.topbar h1{font-size:20px}.top-actions{max-width:54%}.mode-switch button{padding:6px 8px;font-size:11px}.row.draggable-product{align-items:flex-start;flex-wrap:wrap}.row.draggable-product>.right{width:100%;padding-left:38px;text-align:left}.row.draggable-product>.right .actions{justify-content:flex-start}.row.draggable-product>.right .row-meta{text-align:left!important}.product-thumb{width:52px;height:52px}}
+    @media(min-width:760px){.product-tools{grid-template-columns:2fr repeat(4,minmax(130px,1fr))}}
+    .filter-summary{font-size:12px;color:var(--muted);margin:8px 0 0}
+    .quick-price-primary input{font-size:24px;font-weight:800;border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,235,.08)}
+    .update-progress-wrap{margin-bottom:12px}.update-progress-track{height:10px;border-radius:999px;background:#e5e7eb;overflow:hidden}.update-progress-fill{height:100%;background:var(--accent);transition:width .2s ease}.update-progress-meta{display:flex;justify-content:space-between;gap:12px;margin-bottom:7px;font-size:13px}.price-diff-preview{margin-top:12px;padding:12px;border-radius:12px;background:#f9fafb;border:1px solid var(--line);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center}.price-diff-preview strong{display:block;font-size:17px;margin-top:3px}.update-shortcuts{margin-top:10px;font-size:12px;color:var(--muted)}.update-complete-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}.update-complete-grid .mini{padding:12px;border-radius:12px;background:#f9fafb;text-align:center}.update-complete-grid .mini strong{display:block;font-size:20px;margin-top:4px}@media(min-width:760px){.update-complete-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+    .sim-result{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.sim-table input{padding:8px}.updated-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--ok);margin-right:5px}.rank-list .row{padding:9px 0}.memo-box{white-space:pre-wrap;background:#f9fafb;padding:12px;border-radius:12px;line-height:1.6}@media(min-width:760px){.sim-result{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+    .sell-center-grid{display:grid;grid-template-columns:1fr;gap:12px}
+    .sell-goal-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+    .sell-ranking .row{align-items:flex-start}.sell-score{font-size:12px;font-weight:800;color:var(--accent)}
+    .sell-combo{background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px}
+    .sell-combo-item{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line)}
+    .sell-combo-item:last-child{border-bottom:0}.goal-input{max-width:190px}
+    @media(min-width:760px){.sell-center-grid{grid-template-columns:1.1fr .9fr}}
+
+
+    /* v14.5 Mobile UI alignment */
+    .nav-icon{display:block;font-size:18px;line-height:1;margin-bottom:4px}
+    .nav-label{display:block;line-height:1.1}
+    .mobile-only{display:none}
+    .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    @media(max-width:759px){
+      body{background:#f6f7f9;-webkit-tap-highlight-color:transparent}
+      .app{padding:10px 10px calc(86px + env(safe-area-inset-bottom));max-width:none}
+      .topbar{position:sticky;top:0;z-index:9;margin:0 -10px 12px;padding:10px 12px;background:rgba(246,247,249,.96);backdrop-filter:blur(12px);border-bottom:1px solid rgba(229,231,235,.9);align-items:flex-start;flex-direction:column}
+      .topbar>div:first-child{width:100%}.topbar h1{font-size:21px}.topbar .sub{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .top-actions{width:100%;max-width:none;justify-content:space-between;flex-wrap:nowrap;gap:8px}
+      .mode-switch{flex:1;display:grid;grid-template-columns:1fr 1fr}.mode-switch button{min-height:36px;font-size:12px;padding:7px 8px}
+      .pill{white-space:nowrap;padding:7px 9px}
+      nav{grid-template-columns:repeat(6,minmax(0,1fr));box-shadow:0 -5px 20px rgba(17,24,39,.07);border-top-color:#dfe3e8;background:rgba(255,255,255,.98)}
+      nav button{min-height:62px;padding:8px 1px 7px;font-size:10px;background:transparent;touch-action:manipulation}
+      nav button.active{position:relative;background:#eff6ff}
+      nav button.active:before{content:"";position:absolute;top:0;left:24%;right:24%;height:3px;background:var(--accent);border-radius:0 0 3px 3px}
+      .nav-icon{font-size:19px;margin-bottom:5px}.nav-label{font-size:10px;font-weight:700}
+      .grid{gap:9px}.grid.kpi{gap:8px}.card{border-radius:14px;padding:13px;box-shadow:none}
+      .grid.kpi .card{min-height:104px;padding:12px}.kpi-label{font-size:11px}.kpi-value{font-size:20px;line-height:1.2;word-break:break-all}.grid.kpi .sub{font-size:10px}
+      .section-title{margin:15px 2px 8px;gap:8px}.section-title h2{font-size:16px}.section-title .btn{flex:0 0 auto}
+      .btn{min-height:42px;padding:10px 13px}.btn.small{min-height:36px;padding:8px 10px}
+      .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.actions .btn,.actions label.btn{width:100%;text-align:center;display:flex!important;align-items:center;justify-content:center;margin:0}
+      .actions>.btn:only-child{grid-column:1/-1}
+      .ai-hero{padding:15px}.ai-hero>div{display:block!important}.ai-hero .btn{width:100%;margin-top:12px}
+      .sell-center-grid{gap:9px}.sell-goal-head{align-items:stretch}.sell-goal-head>div{width:100%}.sell-goal-head select,.goal-input{max-width:none;width:100%}
+      .sell-ranking .row{display:grid;grid-template-columns:1fr auto;gap:6px 10px}.sell-ranking .row .right{grid-column:1/-1;text-align:left}.sell-ranking .row .actions{display:flex;margin-top:7px}
+      .sell-combo-item{align-items:flex-start}.sell-combo-item .right{min-width:90px}
+      .breakdown-grid{gap:9px}
+      .tabs{margin:0 -2px 10px;padding:2px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{min-height:38px;padding:8px 12px}
+      .chart-controls{gap:8px}.chart-wrap{margin:0 -5px}.chart-wrap canvas{height:220px!important}.chart-tooltip{max-width:82vw;white-space:normal}
+      .product-tools{gap:9px}.product-tools>div:first-child{grid-column:1/-1}
+      .row.draggable-product{padding:13px 0}.product-main{align-items:flex-start}.product-main>div{min-width:0}.row-title{font-size:14px;overflow-wrap:anywhere}
+      .row.draggable-product>.right{padding-left:37px}.row.draggable-product>.right .actions{display:flex}.product-thumb{width:56px;height:56px}
+      .update-box{max-width:none}.big-input{font-size:30px;min-height:58px}.price-diff-preview{grid-template-columns:repeat(3,1fr);padding:10px 6px}.price-diff-preview strong{font-size:15px}.update-shortcuts{display:none}
+      .form-grid.two-col{grid-template-columns:1fr}.custom-range{grid-template-columns:1fr}.sale-summary,.sim-result,.detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      table{min-width:620px}.card:has(table){overflow-x:auto;-webkit-overflow-scrolling:touch}th,td{white-space:nowrap}
+      .sheet{max-height:96dvh;border-radius:18px 18px 0 0;padding:14px 12px calc(18px + env(safe-area-inset-bottom))}.sheet-head{position:sticky;top:-14px;background:#fff;z-index:2;padding:10px 0;border-bottom:1px solid var(--line)}
+      .close{width:40px;height:40px;flex:0 0 auto}.detail-image{max-height:230px}
+      input,select,textarea{min-height:44px;font-size:16px}label{font-size:11px}
+      .mobile-only{display:block}
+    }
+    @media(max-width:390px){
+      .grid.kpi{grid-template-columns:1fr 1fr}.kpi-value{font-size:18px}.grid.kpi .card{min-height:98px}
+      .nav-icon{font-size:17px}.nav-label{font-size:9px}
+      .price-diff-preview{grid-template-columns:1fr}.sale-summary,.sim-result{grid-template-columns:1fr 1fr}
+    }
+
+  </style>
 </head>
 <body>
-  <header class="topbar">
+<div class="app">
+  <div class="topbar">
     <div>
-      <p class="eyebrow">PRIVATE ASSET DASHBOARD</p>
-      <h1>トレカ資産</h1>
+      <h1><button class="app-title-button" onclick="goDashboardTop()">Card Nexus</button></h1>
+      <div class="sub">資産管理・価格履歴・想定手取り・売却判断　v14.5.1</div>
     </div>
-    <div class="top-actions">
-      <button id="cloudBtn" class="secondary">☁ 同期</button>
-      <button id="importBtn" class="primary">JSON</button>
+    <div class="top-actions"><div class="mode-switch" aria-label="表示モード"><button id="marketModeBtn" onclick="setDisplayMode('market')">市場価格</button><button id="netModeBtn" onclick="setDisplayMode('net')">手取り</button></div><div class="pill" id="lastUpdatedPill">未更新</div></div>
+  </div>
+
+  <section id="dashboard" class="view active">
+    <div class="grid kpi">
+      <div class="card"><div class="kpi-label">現在総資産</div><div class="kpi-value" id="grossTotal">¥0</div><div class="sub">入力価格 × 在庫数</div></div>
+      <div class="card"><div class="kpi-label">想定手取り</div><div class="kpi-value" id="netTotal">¥0</div><div class="sub" id="deductionLabel">控除率 0%</div></div>
+      <div class="card"><div class="kpi-label">取得総額</div><div class="kpi-value" id="costTotal">¥0</div><div class="sub">平均取得単価ベース</div></div>
+      <div class="card"><div class="kpi-label">含み損益</div><div class="kpi-value" id="profitTotal">¥0</div><div class="sub" id="profitRate">0%</div></div>
     </div>
-    <input id="fileInput" type="file" accept=".json,application/json" hidden>
-  </header>
 
-  <main>
-    <section id="emptyState" class="empty">
-      <div class="empty-icon">📦</div>
-      <h2>データを読み込んで開始</h2>
-      <p>PCではJSONを読み込み、スマホではクラウド同期から自動取得できます。</p>
-      <button id="emptyImportBtn" class="primary large">JSONを選択</button>
-    </section>
-
-    <div id="app" hidden>
-      <section class="hero card">
+    <div class="section-title"><h2>AI分析</h2></div>
+    <div class="card ai-hero">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <div>
-          <p class="label">総資産</p>
-          <p id="totalAsset" class="hero-value">¥0</p>
-          <p id="lastUpdated" class="muted">最終更新 —</p>
+          <strong style="font-size:19px">保有データを多面的に分析</strong>
+          <div class="sub">価格変動・利益率・高値乖離・集中リスク・利確候補・期待レンジ</div>
         </div>
-        <div class="goal-wrap">
-          <div class="goal-head">
-            <span>目標達成率</span>
-            <strong id="goalPercent">0%</strong>
+        <button class="btn" style="background:#fff;color:#111827" onclick="openAiAnalysis()">AI分析を実行</button>
+      </div>
+    </div>
+
+    <div class="section-title"><h2>目標進捗</h2></div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <strong id="goalText">¥0 / ¥4,000,000</strong><span id="goalPercent">0%</span>
+      </div>
+      <div class="progress"><div id="goalBar" style="width:0%"></div></div>
+    </div>
+
+    <div class="section-title"><h2>登録商品</h2></div>
+    <div class="card" id="inventorySummary"></div>
+    <div class="section-title"><h2>累計販売実績</h2></div><div class="card" id="salesSummary"></div>
+
+    <div class="section-title"><h2>今日の更新状況</h2><button class="btn small secondary" onclick="startUpdate()">価格更新へ</button></div>
+    <div class="card" id="dailyUpdateSummary"></div>
+
+    <div class="section-title"><h2>ランキング</h2></div>
+    <div class="breakdown-grid"><div class="card rank-list"><strong>含み益 上位</strong><div id="profitRanking"></div></div><div class="card rank-list"><strong>ATH乖離 上位</strong><div id="athGapRanking"></div></div></div>
+
+    <div class="section-title"><h2>売却判断センター</h2><button class="btn small secondary" onclick="showView('simulator')">詳しく試算</button></div>
+    <div class="sell-center-grid">
+      <div class="card sell-ranking">
+        <div class="sell-goal-head"><div><strong>おすすめ売却ランキング</strong><div class="sub">手取り利益・利益率・価格推移・保有数量から総合評価</div></div><select id="sellRankingMode" onchange="renderSellDecisionCenter()"><option value="score">総合おすすめ順</option><option value="profit">利益額順</option><option value="rate">利益率順</option></select></div>
+        <div id="sellRankingList" style="margin-top:10px"></div>
+      </div>
+      <div class="card">
+        <div class="sell-goal-head"><div><strong>利益目標</strong><div class="sub">累計の実現利益を基準に計算</div></div><div><label>目標額</label><input class="goal-input" id="dashboardProfitGoal" type="number" min="0" step="10000" onchange="saveDashboardProfitGoal()"></div></div>
+        <div style="margin-top:12px"><div style="display:flex;justify-content:space-between"><strong id="realizedProfitGoalText">¥0 / ¥0</strong><span id="realizedProfitGoalPercent">0%</span></div><div class="progress"><div id="realizedProfitGoalBar" style="width:0%"></div></div></div>
+        <div id="sellCombination"></div>
+      </div>
+    </div>
+
+    <div class="section-title"><h2>ポートフォリオ表示</h2></div>
+    <div class="tabs">
+      <button class="tab active" id="portfolioAllTab" onclick="setPortfolioScope('all')">全商品</button>
+      <button class="tab" id="portfolioFavoriteTab" onclick="setPortfolioScope('favorites')">お気に入りのみ</button>
+    </div>
+
+    <div class="section-title"><h2>資産推移</h2></div>
+    <div class="card">
+      <div class="chart-controls">
+        <div><label>表示項目</label><select id="portfolioMetric" onchange="renderDashboard()"><option value="gross">現在総資産</option><option value="net" selected>想定手取り</option><option value="cost">取得総額</option><option value="profit">含み損益</option></select></div>
+        <div><label>期間</label><select id="portfolioRange" onchange="toggleCustomRange('portfolio');renderDashboard()"><option value="7">7日</option><option value="30">30日</option><option value="90" selected>90日</option><option value="365">1年</option><option value="all">全期間</option><option value="custom">任意期間</option></select></div>
+      </div>
+      <div id="portfolioCustomRange" class="custom-range"><div><label>開始日</label><input id="portfolioStart" type="date" onchange="renderDashboard()"></div><div><label>終了日</label><input id="portfolioEnd" type="date" onchange="renderDashboard()"></div></div>
+      <div class="chart-wrap"><canvas id="portfolioChart" width="900" height="260"></canvas><div id="portfolioChartTooltip" class="chart-tooltip"></div></div>
+    </div>
+
+    <div class="section-title"><h2>保有上位</h2><button class="btn small secondary" onclick="showView('products')">一覧へ</button></div>
+    <div class="card" id="topHoldings"></div>
+  </section>
+
+  <section id="products" class="view">
+    <div class="section-title"><h2>保有商品</h2><button class="btn small" onclick="openProductModal()">商品追加</button></div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="product-tools">
+        <div><label>商品検索</label><input id="productSearch" type="search" placeholder="商品名・メモを検索" oninput="renderProducts()"></div>
+        <div><label>シリーズ</label><select id="productSeriesFilter" onchange="renderProducts()"><option value="all">すべて</option></select></div>
+        <div><label>商品形態</label><select id="productCategoryFilter" onchange="renderProducts()"><option value="all">すべて</option></select></div>
+        <div><label>表示条件</label><select id="productStatusFilter" onchange="renderProducts()"><option value="all">すべて</option><option value="favorite">お気に入り</option><option value="stale">更新漏れ</option><option value="url">URL登録済み</option></select></div>
+        <div><label>並び順</label><select id="productSort" onchange="renderProducts()"><option value="manual">手動順</option><option value="valueDesc">保有額が高い順</option><option value="priceDesc">価格が高い順</option><option value="profitDesc">含み益が大きい順</option><option value="profitAsc">含み損が大きい順</option><option value="nameAsc">商品名順</option><option value="updatedDesc">更新が新しい順</option><option value="updatedAsc">更新が古い順</option></select></div>
+      </div>
+      <div class="actions" style="margin-top:0"><button class="btn small secondary" onclick="resetProductFilters()">絞り込みを解除</button></div>
+      <div class="filter-summary" id="productFilterSummary"></div>
+    </div>
+    <div class="card" id="productList"></div>
+  </section>
+
+  <section id="update" class="view">
+    <div class="update-box">
+      <div class="section-title"><h2>価格更新</h2><span class="muted" id="updateProgress"></span></div>
+      <div class="card" id="updateCard"></div>
+    </div>
+  </section>
+
+  <section id="history" class="view">
+    <div class="section-title"><h2>価格履歴</h2><button class="btn small" onclick="openBackfillModal()">過去価格を追加</button></div>
+    <div class="card">
+      <div class="form-grid two-col">
+        <div><label>商品</label><select id="historyProduct" onchange="renderHistory()"></select></div>
+        <div><label>期間</label><select id="historyRange" onchange="toggleCustomRange('history');renderHistory()"><option value="7">7日</option><option value="30" selected>30日</option><option value="90">90日</option><option value="365">1年</option><option value="all">全期間</option><option value="custom">任意期間</option></select></div>
+      </div>
+      <div id="historyCustomRange" class="custom-range"><div><label>開始日</label><input id="historyStart" type="date" onchange="renderHistory()"></div><div><label>終了日</label><input id="historyEnd" type="date" onchange="renderHistory()"></div></div>
+      <div style="margin-top:14px"><div class="chart-wrap"><canvas id="priceChart" width="900" height="260"></canvas><div id="priceChartTooltip" class="chart-tooltip"></div></div></div>
+      <div id="historyTable"></div>
+    </div>
+  </section>
+
+  <section id="simulator" class="view">
+    <div class="section-title"><h2>売却シミュレーション</h2></div>
+    <div class="card">
+      <div class="form-grid two-col">
+        <div><label>対象商品</label><select id="simProduct" onchange="renderSimulator()"></select></div>
+        <div><label>シナリオ</label><select id="simScenario" onchange="renderSimulator()"><option value="current">現在価格</option><option value="manual">手動価格</option><option value="ath">過去最高価格（ATH）</option><option value="target">目標価格</option><option value="bear">弱気（現在価格 -15%）</option><option value="base">標準（現在価格）</option><option value="bull">強気（現在価格 +20%）</option></select></div>
+        <div><label>想定売却単価</label><input id="simPrice" type="text" inputmode="numeric" oninput="recalcSimulator()"></div>
+        <div><label>売却数量</label><input id="simQty" type="number" min="0" step="1" oninput="recalcSimulator()"></div>
+      </div>
+      <div class="actions"><button class="btn small secondary" onclick="setSimPercent(25)">25%</button><button class="btn small secondary" onclick="setSimPercent(50)">50%</button><button class="btn small secondary" onclick="setSimPercent(75)">75%</button><button class="btn small secondary" onclick="setSimPercent(100)">100%</button></div>
+      <p class="note" id="simCostNote"></p>
+      <div class="sim-result" id="simResult"></div>
+    </div>
+    <div class="section-title"><h2>ポートフォリオ一括試算</h2></div>
+    <div class="card"><div class="actions"><button class="btn small secondary" onclick="setPortfolioSimPercent(25)">全商品25%</button><button class="btn small secondary" onclick="setPortfolioSimPercent(50)">全商品50%</button><button class="btn small secondary" onclick="setPortfolioSimPercent(100)">全商品100%</button></div><div id="portfolioSimTable"></div><div class="sim-result" id="portfolioSimResult" style="margin-top:14px"></div></div>
+  </section>
+
+  <section id="settings" class="view">
+    <div class="section-title"><h2>設定 <small style="font-size:13px;color:var(--muted);font-weight:600">Card Nexus v14.5.1</small></h2></div>
+    <div class="card">
+      <div class="form-grid two-col">
+        <div><label>販売手数料（%）</label><input id="feePercent" type="number" step="0.1" min="0"></div>
+        <div><label>送料・その他（%）</label><input id="shippingPercent" type="number" step="0.1" min="0"></div>
+        <div><label>目標資産額（円）</label><input id="goalAmount" type="number" step="10000" min="0"></div>
+        <div><label>実現利益目標（円）</label><input id="realizedProfitGoal" type="number" step="10000" min="0"></div>
+        <div><label>価格更新時に保存する種別</label><select id="defaultPriceType"><option value="lowest">最安出品価格</option><option value="latest">最新成約価格</option></select></div>
+        <div><label>日別グラフの集計方法</label><select id="dailyAggregation"><option value="latest">その日の最終価格</option><option value="average">その日の平均価格</option><option value="min">その日の最安価格</option><option value="max">その日の最高価格</option></select></div>
+      </div>
+      <div class="actions"><button class="btn" onclick="saveSettings()">設定を保存</button></div>
+      <p class="note">想定手取り = 現在価格 × 在庫数 ×（1 − 合計控除率）で計算します。画面上部の「市場価格／手取り」でアプリ全体の主表示を切り替えられます。</p>
+    </div>
+
+    <div class="section-title"><h2>安全なクラウド同期</h2></div>
+    <div class="card">
+      <div class="form-grid two-col">
+        <div><label>Supabase Project URL</label><input id="cloudProjectUrl" type="url" value="" placeholder="https://YOUR-PROJECT.supabase.co"></div>
+        <div><label>Publishable key</label><input id="cloudPublishableKey" type="password" value="" placeholder="Supabase Publishable Key"></div>
+        <div><label>メールアドレス</label><input id="cloudEmail" type="email"></div>
+        <div><label>パスワード</label><input id="cloudPassword" type="password"></div>
+      </div>
+      <div class="actions"><button class="btn secondary" onclick="cloudSignIn()">ログイン</button><button class="btn secondary" onclick="cloudInspect()">クラウド確認・差分表示</button><button class="btn secondary" onclick="cloudUploadNow(true)">確認してアップロード</button><button class="btn secondary" onclick="cloudRestoreNow()">クラウドから復元</button></div>
+      <p class="note" id="cloudSyncStatus">未ログイン</p>
+      <div id="cloudDiffPanel" class="muted" style="margin-top:12px"></div>
+      <p class="note">自動アップロードは行いません。クラウド確認で差分を表示し、同期前にはPCとクラウドの両方に退避データを作成します。</p>
+    </div>
+
+    <div class="section-title"><h2>バックアップ</h2></div>
+    <div class="card">
+      <p class="muted">画像込みJSONは商品・価格履歴・販売履歴・設定・商品画像の復元用です。閲覧用HTMLはスマホなどで見るための読み取り専用ファイルです。</p>
+      <div class="actions">
+        <button class="btn secondary" onclick="exportData()">画像込みJSONバックアップ</button>
+        <button class="btn secondary" onclick="exportPortfolioHtml()">閲覧用HTMLを書き出す</button>
+        <button class="btn secondary" onclick="refreshAutomaticBackups()">自動バックアップ一覧</button>
+        <button class="btn secondary" onclick="restoreLatestAutomaticBackup()">最新バックアップへ戻す</button>
+        <label class="btn secondary" style="display:inline-block;color:var(--text);cursor:pointer">データを読み込む<input id="importFile" type="file" accept=".json,application/json" hidden onchange="importData(event)"></label>
+        <button class="btn danger" onclick="resetAll()">全データ削除</button>
+      </div>
+      <div id="automaticBackupList" style="margin-top:14px"></div>
+    </div>
+
+    <div class="section-title"><h2>同期ログ</h2></div>
+    <div class="card">
+      <div class="actions"><button class="btn small secondary" onclick="renderSyncLogs()">更新</button><button class="btn small secondary" onclick="clearSyncLogs()">ログを消去</button></div>
+      <div id="syncLogList" style="margin-top:12px"></div>
+    </div>
+  </section>
+</div>
+
+<nav aria-label="メインナビゲーション">
+  <button class="active" data-view="dashboard" onclick="showView('dashboard')"><span class="nav-icon">⌂</span><span class="nav-label">ホーム</span></button>
+  <button data-view="products" onclick="showView('products')"><span class="nav-icon">▦</span><span class="nav-label">商品</span></button>
+  <button data-view="update" onclick="startUpdate()"><span class="nav-icon">↻</span><span class="nav-label">価格更新</span></button>
+  <button data-view="history" onclick="showView('history')"><span class="nav-icon">⌁</span><span class="nav-label">履歴</span></button>
+  <button data-view="simulator" onclick="showView('simulator')"><span class="nav-icon">¥</span><span class="nav-label">試算</span></button>
+  <button data-view="settings" onclick="showView('settings')"><span class="nav-icon">⚙</span><span class="nav-label">設定</span></button>
+</nav>
+
+
+<div class="modal" id="quickUpdateModal">
+  <div class="sheet">
+    <div class="sheet-head"><div><h2 style="margin-bottom:4px">個別価格更新</h2><div class="sub" id="quickUpdateName"></div></div><button class="close" onclick="closeQuickUpdate()">×</button></div>
+    <input id="quickUpdateProductId" type="hidden">
+    <div class="form-grid two-col" style="margin-top:14px">
+      <div class="quick-price-primary"><label>新しい価格</label><input id="quickNewPrice" type="text" inputmode="numeric" onfocus="this.select()" onclick="this.select()" onkeydown="if(event.key==='Enter')saveQuickUpdate()"></div>
+      <div><label>現在価格</label><input id="quickCurrentPrice" type="text" disabled></div>
+      <div><label>価格種別</label><select id="quickUpdateType"><option value="lowest">最安出品価格</option><option value="latest">最新成約価格</option></select></div>
+      <div><label class="inline-check"><input id="quickUseCustomDate" type="checkbox" onchange="toggleQuickDate()">過去の日付を指定</label></div>
+    </div>
+    <div id="quickDateWrap" style="display:none;margin-top:12px">
+      <div class="form-grid two-col">
+        <div><label>記録日</label><input id="quickDate" type="date"></div>
+        <div><label>時刻</label><select id="quickTimeMode" onchange="toggleQuickTime()"><option value="unknown" selected>不明</option><option value="known">指定する</option></select></div>
+        <div id="quickTimeWrap" style="display:none"><label>時刻指定</label><input id="quickTime" type="time" value="12:00"></div>
+      </div>
+    </div>
+    <div style="margin-top:12px"><label>メモ（任意）</label><textarea id="quickNote"></textarea></div>
+    <div class="actions">
+      <button class="btn" onclick="saveQuickUpdate()">価格を保存</button>
+      <button class="btn secondary" onclick="readClipboardPrice('quickNewPrice')">クリップボードから入力</button>
+      <button class="btn secondary" id="quickClipboardMonitorButton" onclick="toggleClipboardMonitor('quickNewPrice')">監視モードを開始</button>
+      <button class="btn secondary" id="quickMarketButton" onclick="openMarketWindow(quickUpdateProductId.value)">スニダンを右側で開く</button>
+      <button class="btn secondary" onclick="closeQuickUpdate()">キャンセル</button>
+    </div>
+    <div id="quickClipboardMonitorStatus" class="note" style="display:none;margin-top:10px"></div>
+  </div>
+</div>
+
+
+<div class="modal" id="saleModal">
+  <div class="sheet">
+    <div class="sheet-head"><div><h2 style="margin-bottom:4px">販売実績を登録</h2><div class="sub" id="saleProductName"></div></div><button class="close" onclick="closeSaleModal()">×</button></div>
+    <input id="saleProductId" type="hidden">
+    <div class="form-grid two-col" style="margin-top:14px">
+      <div><label>販売数量</label><input id="saleQty" type="text" inputmode="numeric" value="1" oninput="recalcSale()" onfocus="this.select()"></div>
+      <div><label>販売日</label><input id="saleDate" type="date"></div>
+      <div><label>販売単価（1点）</label><input id="saleUnitPrice" type="text" inputmode="numeric" placeholder="0" oninput="recalcSale()" onfocus="this.select()"></div>
+      <div><label>売上総額</label><input id="saleGross" type="text" disabled></div>
+      <div><label>販売手数料（実額）</label><input id="saleFee" type="text" inputmode="numeric" value="0" oninput="recalcSale()" onfocus="this.select()"></div>
+      <div><label>送料（実額）</label><input id="saleShipping" type="text" inputmode="numeric" value="0" oninput="recalcSale()" onfocus="this.select()"></div>
+      <div><label>その他費用</label><input id="saleOther" type="text" inputmode="numeric" value="0" oninput="recalcSale()" onfocus="this.select()"></div>
+      <div><label>実際の手残り金</label><input id="saleNet" type="text" inputmode="numeric" oninput="saleNet.dataset.manual='1';recalcSale(true)" onfocus="this.select()"></div>
+    </div>
+    <div class="sale-summary" style="margin-top:14px">
+      <div class="card"><div class="kpi-label">売却分取得額</div><div class="kpi-value" id="saleCostBasis">¥0</div></div>
+      <div class="card"><div class="kpi-label">売却利益</div><div class="kpi-value" id="saleProfit">¥0</div></div>
+      <div class="card"><div class="kpi-label">販売後在庫</div><div class="kpi-value" id="saleRemainingQty">0点</div></div>
+      <div class="card"><div class="kpi-label">控除合計</div><div class="kpi-value" id="saleDeductions">¥0</div></div>
+    </div>
+    <div style="margin-top:12px"><label>販売先・メモ（任意）</label><textarea id="saleNote" placeholder="スニダン、メルカリ、対面販売など"></textarea></div>
+    <div class="actions"><button class="btn" onclick="saveSale()">販売実績を保存</button><button class="btn secondary" onclick="closeSaleModal()">キャンセル</button></div>
+    <p class="note">保存すると登録在庫から販売数量が自動で差し引かれます。実際の手残り金は自動計算後に手入力で修正できます。</p>
+  </div>
+</div>
+
+<div class="modal" id="backfillModal">
+  <div class="sheet">
+    <div class="sheet-head"><div><h2 style="margin-bottom:4px">過去価格を追加</h2><div class="sub">指定日時の履歴として追加します</div></div><button class="close" onclick="closeBackfillModal()">×</button></div>
+    <div class="form-grid two-col" style="margin-top:14px">
+      <div><label>商品</label><select id="backfillProduct"></select></div>
+      <div><label>価格</label><input id="backfillPrice" type="number" min="0" inputmode="numeric"></div>
+      <div><label>記録日</label><input id="backfillDate" type="date"></div>
+      <div><label>時刻</label><select id="backfillTimeMode" onchange="toggleBackfillTime()"><option value="unknown" selected>不明</option><option value="known">指定する</option></select></div>
+      <div id="backfillTimeWrap" style="display:none"><label>時刻指定</label><input id="backfillTime" type="time" value="12:00"></div>
+      <div><label>価格種別</label><select id="backfillType"><option value="lowest">最安出品価格</option><option value="latest">最新成約価格</option></select></div>
+    </div>
+    <div style="margin-top:12px"><label>メモ（任意）</label><textarea id="backfillNote" placeholder="当時の再販・イベントなど"></textarea></div>
+    <div class="actions"><button class="btn" onclick="saveBackfill()">履歴に追加</button><button class="btn secondary" onclick="closeBackfillModal()">キャンセル</button></div>
+    <p class="note">過去日時を追加しても、現在価格より古い記録なら現在価格は変更しません。</p>
+  </div>
+</div>
+
+<div class="modal" id="aiModal">
+  <div class="sheet">
+    <div class="sheet-head"><div><h2 style="margin-bottom:4px">AIポートフォリオ分析</h2><div class="sub">端末内の保存データのみで分析</div></div><button class="close" onclick="closeAiAnalysis()">×</button></div>
+    <div class="form-grid two-col" style="margin-top:14px">
+      <div><label>分析対象</label><select id="aiScope" onchange="renderAiAnalysis()"><option value="portfolio">ポートフォリオ全体</option></select></div>
+      <div><label>投資スタンス</label><select id="aiStyle" onchange="renderAiAnalysis()"><option value="balanced">バランス</option><option value="defensive">利益確定重視</option><option value="growth">上昇期待重視</option></select></div>
+    </div>
+    <div id="aiResult" style="margin-top:16px"></div>
+    <div class="actions">
+      <button class="btn" onclick="renderAiAnalysis()">再分析</button>
+      <button class="btn secondary" onclick="copyAiReport()">分析文をコピー</button>
+      <button class="btn secondary" onclick="closeAiAnalysis()">閉じる</button>
+    </div>
+    <p class="note">この分析は保存済み価格データから算出する参考情報です。外部ニュース、再販情報、スニダン全体の取引量などは現段階では自動取得していません。</p>
+  </div>
+</div>
+
+
+<div class="modal" id="detailModal">
+  <div class="sheet" style="max-width:900px">
+    <div class="sheet-head"><div><h2 id="detailTitle" style="margin-bottom:4px"></h2><div class="sub" id="detailSubtitle"></div></div><button class="close" onclick="closeProductDetail()">×</button></div>
+    <div id="detailContent" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<div class="modal" id="productModal">
+  <div class="sheet">
+    <div class="sheet-head"><h2 id="modalTitle">商品追加</h2><button class="close" onclick="closeProductModal()">×</button></div>
+    <input type="hidden" id="productId">
+    <div class="form-grid two-col">
+      <div><label>商品名</label><input id="productName" placeholder="例：ポケモンカード151 BOX"></div>
+      <div><label>カードシリーズ</label><select id="productCardType">
+        <option>ポケモンカード</option><option>ワンピースカード</option><option>遊戯王</option><option>デュエル・マスターズ</option><option>ドラゴンボール</option><option>ヴァイスシュヴァルツ</option><option>その他</option>
+      </select></div>
+      <div><label>商品形態</label><select id="productCategory"><option>BOX</option><option>カートン</option><option>シングルカード</option><option>プロモ</option><option>セット</option><option>未開封パック</option><option>その他</option></select></div>
+      <div><label>在庫数</label><input id="productQty" type="text" inputmode="numeric" value="1" onfocus="this.select()" onclick="this.select()"></div>
+      <div><label>平均取得単価（円）</label><input id="productCost" type="text" inputmode="numeric" value="0" onfocus="this.select()" onclick="this.select()"></div>
+      <div><label>現在価格（円）</label><input id="productPrice" type="text" inputmode="numeric" value="0" onfocus="this.select()" onclick="this.select()"></div>
+      <div><label>商品URL</label><input id="productUrl" type="url" placeholder="https://..."></div>
+      <div><label>お気に入り</label><label class="inline-check"><input id="productFavorite" type="checkbox">お気に入りポートフォリオに含める</label></div>
+    </div>
+    <div style="margin-top:14px">
+      <label>商品画像</label>
+      <div id="imageDrop" class="image-drop" tabindex="0" onclick="productImageFile.click()">
+        <div id="imageDropText">Windows＋Shift＋Sで撮影後、ここをクリックして Ctrl＋V<br>または画像をドラッグ＆ドロップ／ファイル選択</div>
+        <img id="productImagePreview" alt="" style="display:none">
+      </div>
+      <input id="productImageFile" type="file" accept="image/*" hidden onchange="handleImageFile(this.files[0])">
+      <div class="actions"><button class="btn small secondary" type="button" onclick="productImageFile.click()">画像を選択</button><button class="btn small secondary" type="button" onclick="removePendingImage()">画像を削除</button></div>
+    </div>
+    <div class="form-grid two-col" style="margin-top:12px"><div><label>目標価格（円）</label><input id="productTargetPrice" type="text" inputmode="numeric" value="0"></div><div><label>通常メモ</label><textarea id="productNote" placeholder="シュリンク付き等"></textarea></div></div>
+    <div style="margin-top:12px"><label>投資メモ</label><textarea id="productInvestmentMemo" placeholder="保有理由、売却条件、再販リスクなど"></textarea></div>
+    <div class="actions">
+      <button class="btn" onclick="saveProduct()">保存</button>
+      <button class="btn secondary" onclick="closeProductModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY='tc_asset_tracker_v1';
+const initialState={dataVersion:14,settings:{feePercent:8,shippingPercent:1,goalAmount:4000000,realizedProfitGoal:1000000,defaultPriceType:'lowest',dailyAggregation:'latest',staleDays:3,displayMode:'net'},products:[],history:[],sales:[],portfolioSnapshots:[]};
+let state=loadState();
+let updateIndex=0;
+let updateQueue=[];
+let updateSession=null;
+let lastAiReportText='';
+let portfolioScope='all';
+let pendingImageData=null;
+let pendingImageRemoved=false;
+let marketWindowRef=null;
+
+function loadState(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(KEY)||'{}');
+    const migrated={
+      ...structuredClone(initialState),
+      ...raw,
+      settings:{...initialState.settings,...(raw.settings||{})},
+      products:Array.isArray(raw.products)?raw.products:[],
+      history:Array.isArray(raw.history)?raw.history:[],
+      sales:Array.isArray(raw.sales)?raw.sales:[],
+      portfolioSnapshots:Array.isArray(raw.portfolioSnapshots)?raw.portfolioSnapshots:[]
+    };
+    migrated.products=migrated.products.map((p,i)=>({...p,cardType:p.cardType||'ポケモンカード',favorite:!!p.favorite,sortOrder:Number.isFinite(p.sortOrder)?p.sortOrder:i,targetPrice:Number(p.targetPrice)||0,investmentMemo:p.investmentMemo||''}));
+    migrated.dataVersion=14;
+    return migrated;
+  }catch(e){return structuredClone(initialState)}
+}
+let automaticBackupTimer=null;
+function saveState(){localStorage.setItem(KEY,JSON.stringify(state));renderAll();scheduleAutomaticBackup()}
+function scheduleAutomaticBackup(){
+  if(!window.electronAPI?.saveAutomaticBackup)return;
+  clearTimeout(automaticBackupTimer);
+  automaticBackupTimer=setTimeout(async()=>{
+    try{await window.electronAPI.saveAutomaticBackup({...state,backupVersion:3,exportedAt:nowISO(),backupType:'automatic-local'})}catch(e){console.error('自動バックアップ失敗',e)}
+  },1200);
+}
+async function createSafetyBackup(){
+  if(!window.electronAPI?.saveAutomaticBackup)return null;
+  return window.electronAPI.saveAutomaticBackup({...state,backupVersion:3,exportedAt:nowISO(),backupType:'before-cloud-operation'});
+}
+async function showAutomaticBackups(){
+  try{const r=await window.electronAPI?.listAutomaticBackups();if(!r)throw new Error('Electron版でのみ利用できます');alert(`自動バックアップ保存先\n${r.dir}\n\n保存数：${r.entries.length}件（最新30世代）`)}catch(e){alert(e.message)}
+}
+function yen(n){return new Intl.NumberFormat('ja-JP',{style:'currency',currency:'JPY',maximumFractionDigits:0}).format(Number(n||0))}
+function pct(n){return `${Number(n||0).toFixed(1)}%`}
+function nowISO(){return new Date().toISOString()}
+const PRICE_OVERWRITE_WINDOW_MINUTES=10;
+function addOrOverwritePriceRecord(record){
+  const atMs=new Date(record.at).getTime();
+  const isCurrentEntry=Math.abs(Date.now()-atMs)<=PRICE_OVERWRITE_WINDOW_MINUTES*60000 && record.timeKnown!==false && !String(record.source||'').includes('backfill');
+  if(isCurrentEntry){
+    const recent=state.history
+      .filter(h=>h.productId===record.productId && h.type===record.type && h.timeKnown!==false && !String(h.source||'').includes('backfill'))
+      .sort((a,b)=>new Date(b.at)-new Date(a.at))[0];
+    if(recent && Date.now()-new Date(recent.at).getTime()<=PRICE_OVERWRITE_WINDOW_MINUTES*60000){
+      Object.assign(recent,{price:record.price,at:record.at,note:record.note||recent.note||'',source:record.source||recent.source,correctedAt:nowISO()});
+      return {record:recent,overwritten:true};
+    }
+  }
+  state.history.push(record);
+  return {record,overwritten:false};
+}
+function refreshCurrentPrice(productId){
+  const p=state.products.find(x=>x.id===productId), newest=latestHistoryFor(productId);
+  if(p)p.currentPrice=newest?Number(newest.price)||0:0;
+}
+function editHistoryRecord(id){
+  const r=state.history.find(x=>x.id===id);if(!r)return;
+  const input=prompt('修正後の価格を入力してください',String(r.price));
+  if(input===null)return;
+  const price=parseNum(input);if(price<0||!String(input).trim()){alert('正しい価格を入力してください');return}
+  r.price=price;r.correctedAt=nowISO();refreshCurrentPrice(r.productId);snapshotPortfolio();saveState();renderHistory();
+}
+function deleteHistoryRecord(id){
+  const r=state.history.find(x=>x.id===id);if(!r||!confirm('この価格履歴を削除しますか？'))return;
+  state.history=state.history.filter(x=>x.id!==id);refreshCurrentPrice(r.productId);snapshotPortfolio();saveState();renderHistory();
+}
+
+function orderedProducts(list=state.products){return [...list].sort((a,b)=>(a.sortOrder??999999)-(b.sortOrder??999999))}
+function scopedProducts(){const all=orderedProducts();return portfolioScope==='favorites'?all.filter(p=>p.favorite):all}
+function parseNum(v){return Number(String(v??'').replace(/[^\d.-]/g,''))||0}
+function formatHistoryDate(h){const d=new Date(h.at);return h.timeKnown===false?`${d.toLocaleDateString('ja-JP')} 時刻不明`:d.toLocaleString('ja-JP')}
+function toggleCustomRange(prefix){
+  const range=document.getElementById(prefix+'Range'),box=document.getElementById(prefix+'CustomRange');
+  if(box)box.classList.toggle('open',range?.value==='custom');
+}
+function rangeBounds(prefix){
+  const value=document.getElementById(prefix+'Range')?.value||'all';
+  let start=-Infinity,end=Infinity;
+  if(value==='custom'){
+    const s=document.getElementById(prefix+'Start')?.value,e=document.getElementById(prefix+'End')?.value;
+    if(s)start=new Date(s+'T00:00:00').getTime();
+    if(e)end=new Date(e+'T23:59:59').getTime();
+  }else if(value!=='all'){
+    start=Date.now()-Number(value)*86400000;
+  }
+  return {start,end};
+}
+function filterRowsByRange(rows,prefix){
+  const {start,end}=rangeBounds(prefix);
+  return rows.filter(r=>{const t=new Date(r.at).getTime();return t>=start&&t<=end});
+}
+function buildPortfolioSeries(products,metric='net',prefix='portfolio'){
+  const ids=new Set(products.map(p=>p.id));
+  let dates=[...new Set(state.history.filter(h=>ids.has(h.productId)).map(h=>new Date(h.at).toISOString().slice(0,10)))].sort();
+  const {start,end}=rangeBounds(prefix);
+  dates=dates.filter(d=>{const t=new Date(d+'T12:00:00').getTime();return t>=start&&t<=end});
+  if(!dates.length&&products.length)dates=[new Date().toISOString().slice(0,10)];
+  return dates.map(date=>{
+    const at=new Date(date+'T23:59:59');
+    const gross=products.reduce((sum,p)=>{
+      const h=latestHistoryAtOrBefore(p.id,at);
+      const price=h?Number(h.price)||0:0;
+      return sum+price*(Number(p.qty)||0);
+    },0);
+    const net=gross*(1-totalDeduction()/100);
+    const cost=products.reduce((sum,p)=>sum+(Number(p.cost)||0)*(Number(p.qty)||0),0);
+    const profit=net-cost;
+    return {date,gross,net,cost,profit};
+  }).map(x=>({x:x.date,y:x[metric]}));
+}
+function individualSeries(p,metric='price',prefix='detail'){
+  const rows=filterRowsByRange(productHistory(p.id),prefix);
+  const daily=aggregateDailyRows(rows,state.settings.dailyAggregation||'latest');
+  return daily.map(r=>{
+    const gross=r.price*(Number(p.qty)||0);
+    const net=gross*(1-totalDeduction()/100);
+    const cost=(Number(p.cost)||0)*(Number(p.qty)||0);
+    const profit=net-cost;
+    const values={price:r.price,gross,net,cost,profit};
+    return {x:r.date,y:values[metric]};
+  });
+}
+document.addEventListener('click',e=>{
+  if(!e.target.classList?.contains('modal'))return;
+  const closers={quickUpdateModal:closeQuickUpdate,saleModal:closeSaleModal,backfillModal:closeBackfillModal,aiModal:closeAiAnalysis,detailModal:closeProductDetail,productModal:closeProductModal};
+  closers[e.target.id]?.();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));
+});
+function escapeScriptJson(obj){return JSON.stringify(obj).replace(/</g,'\\u003c').replace(/-->/g,'--\\>')}
+function openImageDb(){return new Promise((resolve,reject)=>{const r=indexedDB.open('tc_asset_images',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('images'))r.result.createObjectStore('images')};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+async function putProductImage(id,data){const db=await openImageDb();return new Promise((resolve,reject)=>{const tx=db.transaction('images','readwrite');tx.objectStore('images').put(data,id);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}
+async function getProductImage(id){try{const db=await openImageDb();return await new Promise((resolve,reject)=>{const r=db.transaction('images').objectStore('images').get(id);r.onsuccess=()=>resolve(r.result||'');r.onerror=()=>reject(r.error)})}catch(e){return ''}}
+async function deleteProductImage(id){try{const db=await openImageDb();await new Promise((resolve,reject)=>{const tx=db.transaction('images','readwrite');tx.objectStore('images').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}catch(e){}}
+async function compressImage(fileOrBlob){
+  const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(fileOrBlob)});
+  const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=reject;i.src=data});
+  const max=1000,scale=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');
+  c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',.82);
+}
+async function handleImageFile(file){if(!file||!file.type.startsWith('image/'))return;pendingImageData=await compressImage(file);pendingImageRemoved=false;showPendingImage()}
+function showPendingImage(){productImagePreview.src=pendingImageData||'';productImagePreview.style.display=pendingImageData?'block':'none';imageDropText.style.display=pendingImageData?'none':'block'}
+function removePendingImage(){pendingImageData=null;pendingImageRemoved=true;showPendingImage()}
+document.addEventListener('paste',async e=>{
+  if(!productModal.classList.contains('open'))return;
+  const item=[...e.clipboardData.items].find(x=>x.type.startsWith('image/'));
+  if(item){e.preventDefault();await handleImageFile(item.getAsFile())}
+});
+document.addEventListener('dragover',e=>{if(productModal.classList.contains('open'))e.preventDefault()});
+document.addEventListener('drop',async e=>{
+  if(!productModal.classList.contains('open'))return;
+  e.preventDefault();const f=[...e.dataTransfer.files].find(x=>x.type.startsWith('image/'));if(f)await handleImageFile(f)
+});
+function totalDeduction(){return (Number(state.settings.feePercent)||0)+(Number(state.settings.shippingPercent)||0)}
+function unitNet(p){return (Number(p?.currentPrice)||0)*(1-totalDeduction()/100)}
+function holdingMarket(p){return (Number(p?.currentPrice)||0)*(Number(p?.qty)||0)}
+function holdingNet(p){return holdingMarket(p)*(1-totalDeduction()/100)}
+function displayMode(){return state.settings.displayMode==='market'?'market':'net'}
+function setDisplayMode(mode){state.settings.displayMode=mode==='market'?'market':'net';localStorage.setItem(KEY,JSON.stringify(state));renderAll()}
+function updateDisplayModeUi(){const mode=displayMode();document.getElementById('marketModeBtn')?.classList.toggle('active',mode==='market');document.getElementById('netModeBtn')?.classList.toggle('active',mode==='net')}
+function currentGross(){return scopedProducts().reduce((s,p)=>s+(Number(p.currentPrice)||0)*(Number(p.qty)||0),0)}
+function currentNet(){return currentGross()*(1-totalDeduction()/100)}
+function currentCost(){return scopedProducts().reduce((s,p)=>s+(Number(p.cost)||0)*(Number(p.qty)||0),0)}
+function snapshotPortfolio(){
+  const gross=currentGross(),net=currentNet();
+  const last=state.portfolioSnapshots[state.portfolioSnapshots.length-1];
+  const today=new Date().toISOString().slice(0,10);
+  if(last && last.date===today){last.gross=gross;last.net=net;last.at=nowISO()}
+  else state.portfolioSnapshots.push({date:today,gross,net,at:nowISO()});
+}
+
+function goDashboardTop(){showView('dashboard');setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),20)}
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
+  if(id==='history')renderHistory();
+  if(id==='simulator')renderSimulator();
+  if(id==='settings'){refreshAutomaticBackups();renderSyncLogs();}
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function renderAll(){renderDashboard();renderInventorySummary();renderSalesSummary();renderProductFilterOptions();renderProducts();renderSettings();renderHistorySelectors();renderAiSelectors();renderSimulatorSelectors();renderSimulator();renderUpdateCard();}
+
+function renderInventorySummary(){
+  const products=orderedProducts(),types=products.length,totalQty=products.reduce((s,p)=>s+(Number(p.qty)||0),0);
+  const bySeries={},byCategory={};
+  products.forEach(p=>{const s=p.cardType||'未分類',c=p.category||'未分類',q=Number(p.qty)||0;bySeries[s]=(bySeries[s]||0)+q;byCategory[c]=(byCategory[c]||0)+q});
+  const chips=obj=>Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<span class="breakdown-chip">${escapeHtml(k)}：${v}点</span>`).join('')||'<span class="muted">登録なし</span>';
+  inventorySummary.innerHTML=`<div class="detail-grid"><div><div class="kpi-label">登録商品種類</div><div class="kpi-value">${types}種類</div></div><div><div class="kpi-label">総在庫数</div><div class="kpi-value">${totalQty}点</div></div></div><div class="breakdown-grid" style="margin-top:14px"><div><strong>シリーズ別内訳</strong><div class="breakdown-list">${chips(bySeries)}</div></div><div><strong>商品形態別内訳</strong><div class="breakdown-list">${chips(byCategory)}</div></div></div>`;
+}
+
+function renderSalesSummary(){
+  const t=salesTotals();
+  salesSummary.innerHTML=`<div class="sale-summary"><div><div class="kpi-label">累計販売数</div><div class="kpi-value">${t.qty}点</div></div><div><div class="kpi-label">累計売上</div><div class="kpi-value">${yen(t.gross)}</div></div><div><div class="kpi-label">累計手残り</div><div class="kpi-value">${yen(t.net)}</div></div><div><div class="kpi-label">累計売却利益</div><div class="kpi-value ${t.profit>=0?'positive':'negative'}">${yen(t.profit)}</div></div></div><div class="row-meta" style="margin-top:10px">手数料 ${yen(t.fee)}・送料 ${yen(t.shipping)}・その他費用 ${yen(t.other)}</div>`
+}
+
+function renderDashboard(){
+  const gross=currentGross(),net=currentNet(),cost=currentCost(),profit=net-cost,rate=cost?profit/cost*100:0,mode=displayMode();
+  updateDisplayModeUi();
+  grossTotal.textContent=yen(gross);netTotal.textContent=yen(net);costTotal.textContent=yen(cost);profitTotal.textContent=yen(profit);
+  grossTotal.parentElement.querySelector('.kpi-label').textContent=mode==='market'?'現在総資産':'市場評価額';
+  netTotal.parentElement.querySelector('.kpi-label').textContent=mode==='net'?'総手取り資産':'想定手取り';
+  profitTotal.className='kpi-value '+(profit>=0?'positive':'negative');profitRate.textContent=pct(rate);
+  deductionLabel.textContent=`控除率 ${pct(totalDeduction())}`;
+  const goalBase=mode==='net'?net:gross;
+  const goal=Number(state.settings.goalAmount)||0,progress=goal?Math.min(100,goalBase/goal*100):0;
+  goalText.textContent=`${yen(goalBase)} / ${yen(goal)}`;goalPercent.textContent=pct(progress);goalBar.style.width=progress+'%';
+  const latest=[...state.history].sort((a,b)=>new Date(b.at)-new Date(a.at))[0];
+  lastUpdatedPill.textContent=latest?`最終更新 ${formatHistoryDate(latest)}`:'未更新';
+  portfolioAllTab?.classList.toggle('active',portfolioScope==='all');portfolioFavoriteTab?.classList.toggle('active',portfolioScope==='favorites');
+  const sorted=[...scopedProducts()].sort((a,b)=>(b.currentPrice*b.qty)-(a.currentPrice*a.qty)).slice(0,5);
+  topHoldings.innerHTML=sorted.length?sorted.map(p=>`<div class="row"><div><div class="row-title"><button class="link-button" onclick="openProductDetail('${p.id}')">${escapeHtml(p.name)}</button></div><div class="row-meta">${p.qty}点・${escapeHtml(p.category)}</div></div><div class="right"><div class="price">${yen(p.currentPrice*p.qty)}</div><div class="row-meta">手取り ${yen(p.currentPrice*p.qty*(1-totalDeduction()/100))}</div></div></div>`).join(''):'<div class="empty">商品を追加すると表示されます</div>';
+  const metric=document.getElementById('portfolioMetric')?.value||'net';
+  const chartProducts=scopedProducts();
+  const points=buildPortfolioSeries(chartProducts,metric,'portfolio');
+  const metricLabels={gross:'現在総資産',net:'想定手取り',cost:'取得総額',profit:'含み損益'};
+  drawLineChart('portfolioChart',points,metricLabels[metric]||'想定手取り');
+  renderDailyUpdateSummary();renderRankings();renderSellDecisionCenter();
+}
+function setPortfolioScope(scope){portfolioScope=scope;renderDashboard()}
+
+function sellCandidateRows(){
+  const feeFactor=1-totalDeduction()/100;
+  return state.products.filter(p=>(Number(p.qty)||0)>0).map(p=>{
+    const current=Number(p.currentPrice)||0,cost=Number(p.cost)||0,qty=Number(p.qty)||0;
+    const netUnit=current*feeFactor,profitUnit=netUnit-cost,profitTotal=profitUnit*qty,rate=cost?profitUnit/cost*100:0;
+    const rows=state.history.filter(h=>h.productId===p.id).sort((a,b)=>new Date(a.at)-new Date(b.at));
+    const cutoff=Date.now()-30*86400000,old=rows.find(h=>new Date(h.at).getTime()>=cutoff)?.price || rows[0]?.price || current;
+    const momentum=old?((current-old)/old*100):0;
+    const score=Math.round(Math.max(0,Math.min(100,50+Math.min(25,rate*.22)+Math.min(15,Math.max(-15,momentum*.7))+Math.min(10,Math.log10(Math.max(1,profitTotal))*2))));
+    return {p,current,qty,netUnit,profitUnit,profitTotal,rate,momentum,score};
+  }).filter(x=>x.current>0&&x.profitUnit>0);
+}
+function renderSellDecisionCenter(){
+  const list=document.getElementById('sellRankingList'),combo=document.getElementById('sellCombination');if(!list||!combo)return;
+  const rows=sellCandidateRows(),mode=document.getElementById('sellRankingMode')?.value||'score';
+  const sorted=[...rows].sort((a,b)=>mode==='profit'?b.profitTotal-a.profitTotal:mode==='rate'?b.rate-a.rate:b.score-a.score);
+  list.innerHTML=sorted.length?sorted.slice(0,5).map((x,i)=>`<div class="row"><div><div class="row-title">${['🥇','🥈','🥉'][i]||'・'} <button class="link-button" onclick="openProductDetail('${x.p.id}')">${escapeHtml(x.p.name)}</button></div><div class="row-meta">利益率 ${pct(x.rate)}・30日 ${pct(x.momentum)}・在庫 ${x.qty}点</div></div><div class="right"><div class="price positive">${yen(x.profitTotal)}</div><div class="sell-score">推奨度 ${x.score}</div><button class="btn small secondary" onclick="openSimulatorFor('${x.p.id}')">試算</button></div></div>`).join(''):'<div class="empty">手取りベースで利益が出ている商品がありません</div>';
+  const realized=salesTotals().profit,goal=Number(state.settings.realizedProfitGoal)||0,remain=Math.max(0,goal-realized),progress=goal?Math.min(100,realized/goal*100):0;
+  dashboardProfitGoal.value=goal;realizedProfitGoalText.textContent=`${yen(realized)} / ${yen(goal)}`;realizedProfitGoalPercent.textContent=pct(progress);realizedProfitGoalBar.style.width=progress+'%';
+  if(remain<=0){combo.innerHTML='<div class="sell-combo"><strong>目標達成済み 🎉</strong><div class="sub">次の利益目標を設定できます。</div></div>';return}
+  let left=remain,total=0;const picks=[];
+  for(const x of sorted){if(left<=0)break;const count=Math.min(x.qty,Math.max(1,Math.ceil(left/x.profitUnit)));const gain=count*x.profitUnit;picks.push({x,count,gain});total+=gain;left-=gain}
+  combo.innerHTML=`<div class="sell-combo"><strong>あと ${yen(remain)} の実現利益</strong><div class="sub">現在価格での概算候補</div>${picks.length?picks.map(k=>`<div class="sell-combo-item"><span>${escapeHtml(k.x.p.name)} × ${k.count}</span><strong class="positive">+${yen(k.gain)}</strong></div>`).join(''):'<div class="empty">達成候補がありません</div>'}<div style="display:flex;justify-content:space-between;margin-top:10px"><span>候補合計</span><strong>${yen(total)}</strong></div></div>`;
+}
+function saveDashboardProfitGoal(){state.settings.realizedProfitGoal=Math.max(0,Number(dashboardProfitGoal.value)||0);saveState();renderSellDecisionCenter()}
+function openSimulatorFor(id){showView('simulator');setTimeout(()=>{if(document.getElementById('simProduct')){simProduct.value=id;renderSimulator()}},20)}
+
+function buildFavoriteSnapshots(){
+  const favorites=state.products.filter(p=>p.favorite),dates=[...new Set(state.history.map(h=>new Date(h.at).toISOString().slice(0,10)))].sort();
+  return dates.map(date=>{
+    const end=new Date(date+'T23:59:59');
+    const gross=favorites.reduce((s,p)=>{const h=latestHistoryAtOrBefore(p.id,end);return s+(h?Number(h.price):Number(p.currentPrice)||0)*(Number(p.qty)||0)},0);
+    return {date,gross,net:gross*(1-totalDeduction()/100)}
+  });
+}
+
+function renderProductFilterOptions(){
+  const series=[...new Set(state.products.map(p=>p.cardType||'未分類'))].sort((a,b)=>a.localeCompare(b,'ja'));
+  const cats=[...new Set(state.products.map(p=>p.category||'未分類'))].sort((a,b)=>a.localeCompare(b,'ja'));
+  const refill=(el,values)=>{if(!el)return;const current=el.value;el.innerHTML='<option value="all">すべて</option>'+values.map(v=>`<option value="${escapeAttr(v)}">${escapeHtml(v)}</option>`).join('');el.value=values.includes(current)?current:'all'};
+  refill(document.getElementById('productSeriesFilter'),series);refill(document.getElementById('productCategoryFilter'),cats);
+}
+function resetProductFilters(){
+  productSearch.value='';productSeriesFilter.value='all';productCategoryFilter.value='all';productStatusFilter.value='all';productSort.value='manual';renderProducts();
+}
+function filteredSortedProducts(){
+  const query=(document.getElementById('productSearch')?.value||'').trim().toLowerCase();
+  const series=document.getElementById('productSeriesFilter')?.value||'all',category=document.getElementById('productCategoryFilter')?.value||'all';
+  const status=document.getElementById('productStatusFilter')?.value||'all',sort=document.getElementById('productSort')?.value||'manual';
+  let products=orderedProducts().filter(p=>{
+    const updated=latestHistoryFor(p.id),stale=!updated||Date.now()-new Date(updated.at).getTime()>(Number(state.settings.staleDays)||3)*86400000;
+    const text=`${p.name||''} ${p.note||''}`.toLowerCase();
+    return (!query||text.includes(query))&&(series==='all'||(p.cardType||'未分類')===series)&&(category==='all'||(p.category||'未分類')===category)&&(status==='all'||status==='favorite'&&p.favorite||status==='stale'&&stale||status==='url'&&p.url);
+  });
+  const net=p=>(Number(p.currentPrice)||0)*(Number(p.qty)||0)*(1-totalDeduction()/100),cost=p=>(Number(p.cost)||0)*(Number(p.qty)||0),updatedAt=p=>new Date(latestHistoryFor(p.id)?.at||0).getTime();
+  const sorts={valueDesc:(a,b)=>b.currentPrice*b.qty-a.currentPrice*a.qty,priceDesc:(a,b)=>b.currentPrice-a.currentPrice,profitDesc:(a,b)=>(net(b)-cost(b))-(net(a)-cost(a)),profitAsc:(a,b)=>(net(a)-cost(a))-(net(b)-cost(b)),nameAsc:(a,b)=>a.name.localeCompare(b.name,'ja'),updatedDesc:(a,b)=>updatedAt(b)-updatedAt(a),updatedAsc:(a,b)=>updatedAt(a)-updatedAt(b)};
+  if(sorts[sort])products.sort(sorts[sort]);
+  return products;
+}
+function renderProducts(){
+  const products=filteredSortedProducts(),total=state.products.length;
+  if(document.getElementById('productFilterSummary'))productFilterSummary.textContent=`${products.length}種類を表示／登録 ${total}種類`;
+  const manual=(document.getElementById('productSort')?.value||'manual')==='manual';
+  productList.innerHTML=products.length?products.map(p=>{
+    const updated=latestHistoryFor(p.id);
+    const stale=!updated||Date.now()-new Date(updated.at).getTime()>(Number(state.settings.staleDays)||3)*86400000;
+    return `<div class="row draggable-product" draggable="${manual}" data-id="${p.id}" ondragstart="productDragStart(event)" ondragover="event.preventDefault()" ondrop="productDrop(event)" ondragend="productDragEnd(event)">
+      <span class="drag-handle" title="${manual?'ドラッグして並べ替え':'手動順を選ぶと並べ替えできます'}" style="${manual?'':'opacity:.3;cursor:not-allowed'}">≡</span>
+      <div class="product-main">
+        <img class="product-thumb" id="thumb-${p.id}" alt="">
+        <div style="min-width:0">
+          <div class="row-title">
+            <button class="favorite ${p.favorite?'on':''}" onclick="event.stopPropagation();toggleFavorite('${p.id}')" title="お気に入り">${p.favorite?'★':'☆'}</button>
+            <span onclick="openProductDetail('${p.id}')" style="cursor:pointer">${escapeHtml(p.name)}</span>
+            ${updated&&Date.now()-new Date(updated.at).getTime()<21600000?'<span class="status"><span class="updated-dot"></span>更新済み</span>':''}${stale?'<span class="status warning">更新漏れ</span>':''}
           </div>
-          <div class="progress"><div id="goalBar"></div></div>
-          <p id="goalText" class="muted">目標 ¥0</p>
-        </div>
-      </section>
-
-      <section class="stats-grid">
-        <article class="card stat">
-          <span>評価損益</span>
-          <strong id="profitValue">¥0</strong>
-        </article>
-        <article class="card stat">
-          <span>利益率</span>
-          <strong id="profitRate">0%</strong>
-        </article>
-        <article class="card stat">
-          <span>保有点数</span>
-          <strong id="totalQty">0</strong>
-        </article>
-        <article class="card stat">
-          <span>お気に入り</span>
-          <strong id="favoriteCount">0</strong>
-        </article>
-      </section>
-
-
-      <section class="insights-grid">
-        <article class="card insight-card">
-          <div class="section-head"><h2>前日比</h2><span class="muted">総資産</span></div>
-          <strong id="dailyChange" class="insight-value">—</strong>
-          <p id="dailyChangeRate" class="muted">比較データなし</p>
-        </article>
-        <article class="card insight-card">
-          <div class="section-head"><h2>最大保有</h2><span class="muted">資産額</span></div>
-          <strong id="largestHolding" class="insight-name">—</strong>
-          <p id="largestHoldingValue" class="muted">—</p>
-        </article>
-      </section>
-
-      <section class="dashboard-grid">
-        <article class="card panel">
-          <div class="section-head"><h2>資産ランキング</h2><span class="muted">TOP 5</span></div>
-          <div id="assetRanking" class="ranking-list"></div>
-        </article>
-        <article class="card panel">
-          <div class="section-head"><h2>価格変動</h2><span class="muted">直近履歴</span></div>
-          <div id="moversList" class="ranking-list"></div>
-        </article>
-      </section>
-
-      <section class="card panel portfolio-chart-panel">
-        <div class="section-head"><h2>総資産推移</h2><span id="portfolioPeriod" class="muted">履歴</span></div>
-        <canvas id="portfolioChart" width="760" height="280"></canvas>
-        <p id="portfolioSummary" class="muted history-summary"></p>
-      </section>
-
-      <section class="card panel allocation-panel">
-        <div class="section-head"><h2>資産構成</h2><span class="muted">カード種別</span></div>
-        <div id="allocationList" class="allocation-list"></div>
-      </section>
-
-      <section class="dashboard-grid analysis-grid">
-        <article class="card panel">
-          <div class="section-head"><h2>利益ランキング</h2><span class="muted">TOP 5</span></div>
-          <div id="profitRanking" class="ranking-list"></div>
-        </article>
-        <article class="card panel">
-          <div class="section-head"><h2>含み損ランキング</h2><span class="muted">要確認</span></div>
-          <div id="lossRanking" class="ranking-list"></div>
-        </article>
-      </section>
-
-      <section class="card panel decision-panel">
-        <div class="section-head"><h2>売却サポート</h2><span class="muted">自動判定</span></div>
-        <div id="decisionSummary" class="decision-summary"></div>
-        <div id="sellCandidates" class="candidate-list"></div>
-      </section>
-
-      <section class="card panel ai-panel">
-        <div class="section-head"><h2>データ分析メモ</h2><span class="muted">自動生成</span></div>
-        <div id="analysisMemo" class="analysis-memo"></div>
-      </section>
-
-      <section class="controls card">
-        <input id="searchInput" type="search" placeholder="商品名で検索">
-        <select id="typeFilter">
-          <option value="">すべてのカード</option>
-        </select>
-        <select id="sortSelect">
-          <option value="asset-desc">資産額が高い順</option>
-          <option value="profit-desc">利益額が高い順</option>
-          <option value="rate-desc">利益率が高い順</option>
-          <option value="name-asc">商品名順</option>
-        </select>
-        <label class="check"><input id="favoriteOnly" type="checkbox"> お気に入りのみ</label>
-      </section>
-
-      <section>
-        <div class="section-head">
-          <h2>保有一覧</h2>
-          <span id="resultCount" class="muted">0件</span>
-        </div>
-        <div id="productList" class="product-list"></div>
-      </section>
-    </div>
-  </main>
-
-  <dialog id="detailDialog">
-    <div class="dialog-inner">
-      <button id="closeDialog" class="close" aria-label="閉じる">×</button>
-      <img id="detailImage" alt="" hidden>
-      <h2 id="detailName"></h2>
-      <p id="detailMeta" class="muted"></p>
-      <div id="detailStats" class="detail-grid"></div>
-      <section id="historySection" class="history-section" hidden>
-        <h3>価格推移</h3>
-        <canvas id="priceChart" width="640" height="260"></canvas>
-        <p id="historySummary" class="muted history-summary"></p>
-      </section>
-      <p id="detailMemo" class="memo"></p>
-      <a id="detailLink" class="primary link-btn" target="_blank" rel="noopener" hidden>商品ページを開く</a>
-    </div>
-  </dialog>
-
-  <dialog id="cloudDialog">
-    <div class="dialog-inner cloud-dialog-inner">
-      <button id="closeCloudDialog" class="close" aria-label="閉じる">×</button>
-      <h2>Supabaseクラウド同期</h2>
-      <p class="muted">同じアカウントでPCとスマホからログインすると、最新バックアップを共有できます。</p>
-
-      <div class="cloud-form">
-        <label>Project URL<input id="supabaseUrl" type="url" placeholder="https://xxxxx.supabase.co"></label>
-        <label>Publishable key<input id="supabaseKey" type="password" placeholder="sb_publishable_... または anon key"></label>
-        <button id="saveCloudConfig" class="secondary full">接続情報を保存</button>
-      </div>
-
-      <div class="cloud-form auth-form">
-        <label>メールアドレス<input id="cloudEmail" type="email" autocomplete="username"></label>
-        <label>パスワード<input id="cloudPassword" type="password" autocomplete="current-password"></label>
-        <div class="cloud-actions">
-          <button id="cloudSignIn" class="primary">ログイン</button>
-          <button id="cloudSignUp" class="secondary">新規登録</button>
-          <button id="cloudSignOut" class="ghost">ログアウト</button>
+          <div class="row-meta">${escapeHtml(p.cardType||'未分類')}・${escapeHtml(p.category)}・${p.qty}点・${updated?formatHistoryDate(updated):'履歴なし'}</div>
         </div>
       </div>
-
-      <div id="cloudStatus" class="cloud-status">未接続</div>
-      <div class="cloud-actions sync-actions">
-        <button id="cloudDownload" class="primary">PCの最新データを取得</button>
+      <div class="right">
+        <div class="price">${displayMode()==='net'?yen(unitNet(p)):yen(p.currentPrice)} ${displayMode()==='net'?'<span class="mode-badge">手取り単価</span>':''}</div>
+        <div class="row-meta" style="text-align:right;margin-top:4px">市場単価 ${yen(p.currentPrice)}・市場総額 ${yen(holdingMarket(p))}</div>
+        <div class="row-meta net-highlight" style="text-align:right;margin-top:3px">想定手取り ${yen(holdingNet(p))}</div>
+        <div class="actions" style="justify-content:flex-end;margin-top:6px">
+          <button class="btn small" onclick="openQuickUpdateWithMarket('${p.id}')">価格更新</button>
+          <button class="btn small secondary" onclick="openSaleModal('${p.id}')">販売登録</button>
+          ${p.url?`<button class="btn small secondary" onclick="openMarketWindow('${p.id}')">スニダン確認</button>`:''}
+          <button class="btn small secondary" onclick="openProductDetail('${p.id}')">詳細</button>
+          <button class="btn small secondary" onclick="openProductModal('${p.id}')">編集</button>
+          <button class="btn small danger" onclick="deleteProduct('${p.id}')">削除</button>
+        </div>
       </div>
-      <div id="cloudMeta" class="cloud-status">クラウド情報：未取得</div>
-      <p class="cloud-note">スマホは閲覧専用です。データの変更とアップロードはPC版で行い、このボタンで必ずPCの最新データを取得します。</p>
-    </div>
-  </dialog>
+    </div>`;
+  }).join(''):'<div class="empty">条件に一致する商品がありません</div>';
+  products.forEach(async p=>{const img=await getProductImage(p.id),el=document.getElementById('thumb-'+p.id);if(el){if(img)el.src=img;else el.style.visibility='hidden'}});
+}
+let draggedProductId=null;
+function productDragStart(e){if((document.getElementById('productSort')?.value||'manual')!=='manual'){e.preventDefault();return}draggedProductId=e.currentTarget.dataset.id;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move'}
+function productDragEnd(e){e.currentTarget.classList.remove('dragging');draggedProductId=null}
+function productDrop(e){
+  e.preventDefault();
+  const targetId=e.currentTarget.dataset.id;
+  if(!draggedProductId||draggedProductId===targetId)return;
+  const arr=orderedProducts(),from=arr.findIndex(p=>p.id===draggedProductId),to=arr.findIndex(p=>p.id===targetId);
+  const [moved]=arr.splice(from,1);arr.splice(to,0,moved);arr.forEach((p,i)=>p.sortOrder=i);saveState();
+}
+function toggleFavorite(id){const p=state.products.find(x=>x.id===id);if(p){p.favorite=!p.favorite;saveState()}}
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js"></script>
-  <script src="supabase-sync.js"></script>
+async function openProductModal(id=''){
+  modalTitle.textContent=id?'商品編集':'商品追加';productId.value=id;pendingImageData=null;pendingImageRemoved=false;
+  const p=state.products.find(x=>x.id===id);
+  productName.value=p?.name||'';productCardType.value=p?.cardType||'ポケモンカード';productCategory.value=p?.category||'BOX';
+  productQty.value=p?.qty??1;productCost.value=p?.cost??0;productPrice.value=p?.currentPrice??0;productUrl.value=p?.url||'';productNote.value=p?.note||'';productTargetPrice.value=p?.targetPrice??0;productInvestmentMemo.value=p?.investmentMemo||'';productFavorite.checked=!!p?.favorite;
+  pendingImageData=id?await getProductImage(id):null;showPendingImage();productModal.classList.add('open');
+}
+function closeProductModal(){productModal.classList.remove('open')}
+async function saveProduct(){
+  const name=productName.value.trim();if(!name){alert('商品名を入力してください');return}
+  const id=productId.value||crypto.randomUUID(),existing=state.products.find(x=>x.id===id);
+  const obj={id,name,cardType:productCardType.value,category:productCategory.value,qty:parseNum(productQty.value),cost:parseNum(productCost.value),currentPrice:parseNum(productPrice.value),url:productUrl.value.trim(),note:productNote.value.trim(),targetPrice:parseNum(productTargetPrice.value),investmentMemo:productInvestmentMemo.value.trim(),favorite:productFavorite.checked,sortOrder:existing?.sortOrder??state.products.length};
+  const idx=state.products.findIndex(x=>x.id===id);
+  if(idx>=0)state.products[idx]=obj;else{
+    state.products.push(obj);
+    if(obj.currentPrice>0)state.history.push({id:crypto.randomUUID(),productId:id,price:obj.currentPrice,type:state.settings.defaultPriceType,at:nowISO(),timeKnown:true,source:'initial'});
+  }
+  if(pendingImageRemoved)await deleteProductImage(id);else if(pendingImageData)await putProductImage(id,pendingImageData);
+  snapshotPortfolio();closeProductModal();renderProductFilterOptions();saveState();
+}
+function deleteProduct(id){
+  if(!confirm('この商品を削除しますか？履歴も削除されます。'))return;
+  state.products=state.products.filter(x=>x.id!==id);state.history=state.history.filter(x=>x.productId!==id);state.sales=(state.sales||[]).filter(x=>x.productId!==id);deleteProductImage(id);snapshotPortfolio();renderProductFilterOptions();saveState();
+}
+
+function openMarketWindow(id){
+  const p=state.products.find(x=>x.id===id);
+  if(!p?.url){alert('商品URLが登録されていません');return}
+  const screenLeft=window.screenLeft??window.screenX??0;
+  const screenTop=window.screenTop??window.screenY??0;
+  const availW=window.screen?.availWidth||window.innerWidth;
+  const availH=window.screen?.availHeight||window.innerHeight;
+  const width=Math.max(480,Math.floor(availW/2));
+  const height=Math.max(600,availH-40);
+  const left=screenLeft+Math.max(0,availW-width);
+  const top=screenTop;
+  const features=`popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`;
+  const w=window.open(p.url,'snkrdunkWindow',features);
+  marketWindowRef=w;
+  if(!w){
+    alert('別ウィンドウがブロックされました。ブラウザのポップアップを許可してください。');
+    return;
+  }
+  try{w.focus()}catch(e){}
+}
+function openQuickUpdateWithMarket(id){
+  openQuickUpdate(id);
+  const p=state.products.find(x=>x.id===id);
+  if(p?.url){
+    setTimeout(()=>openMarketWindow(id),50);
+  }
+}
+function openQuickUpdate(id){
+  const p=state.products.find(x=>x.id===id);if(!p)return;
+  quickUpdateProductId.value=id;quickUpdateName.textContent=p.name;quickCurrentPrice.value=yen(p.currentPrice);
+  quickNewPrice.value='';quickNewPrice.placeholder=new Intl.NumberFormat('ja-JP').format(Number(p.currentPrice)||0);quickUpdateType.value=state.settings.defaultPriceType||'lowest';
+  quickMarketButton.style.display=p.url?'inline-flex':'none';
+  quickUseCustomDate.checked=false;quickDateWrap.style.display='none';quickDate.value=new Date().toLocaleDateString('sv-SE');
+  quickTimeMode.value='unknown';quickTime.value='12:00';toggleQuickTime();quickNote.value='';
+  quickUpdateModal.classList.add('open');refreshClipboardMonitorUi();setTimeout(()=>{quickNewPrice.focus();quickNewPrice.select()},30);
+}
+function closeQuickUpdate(){quickUpdateModal.classList.remove('open');if(clipboardMonitorEnabled&&clipboardMonitorTargetId==='quickNewPrice')toggleClipboardMonitor('quickNewPrice')}
+function toggleQuickDate(){quickDateWrap.style.display=quickUseCustomDate.checked?'block':'none';if(quickUseCustomDate.checked){quickTimeMode.value='unknown';toggleQuickTime()}}
+function toggleQuickTime(){quickTimeWrap.style.display=quickTimeMode.value==='known'?'block':'none'}
+function saveQuickUpdate(){
+  const id=quickUpdateProductId.value,p=state.products.find(x=>x.id===id),raw=quickNewPrice.value.trim();
+  if(!raw){alert('新しい価格を入力してください');quickNewPrice.focus();return}
+  const price=parseNum(raw);
+  if(!p||price<0){alert('正しい価格を入力してください');return}
+  const custom=quickUseCustomDate.checked,date=quickDate.value,timeKnown=quickTimeMode.value==='known',time=timeKnown?(quickTime.value||'12:00'):'12:00';
+  if(custom&&!date){alert('記録日を入力してください');return}
+  const at=custom?new Date(`${date}T${time}:00`).toISOString():nowISO();
+  const result=addOrOverwritePriceRecord({id:crypto.randomUUID(),productId:id,price,type:quickUpdateType.value,at,timeKnown:custom?timeKnown:true,source:custom?'manual-backfill':'individual',note:quickNote.value.trim()});
+  refreshCurrentPrice(id);
+  if(result.overwritten)setTimeout(()=>alert(`直前${PRICE_OVERWRITE_WINDOW_MINUTES}分以内の価格を上書きしました`),50);
+  snapshotPortfolio();closeQuickUpdate();
+  saveState();
+  if(detailModal.classList.contains('open'))openProductDetail(id);
+}
+function productSales(id){return (state.sales||[]).filter(s=>s.productId===id).sort((a,b)=>new Date(a.soldAt)-new Date(b.soldAt))}
+function salesTotals(list=state.sales||[]){return list.reduce((a,s)=>{a.qty+=Number(s.qty)||0;a.gross+=Number(s.gross)||0;a.fee+=Number(s.fee)||0;a.shipping+=Number(s.shipping)||0;a.other+=Number(s.other)||0;a.net+=Number(s.net)||0;a.cost+=Number(s.costBasis)||0;a.profit+=Number(s.profit)||0;return a},{qty:0,gross:0,fee:0,shipping:0,other:0,net:0,cost:0,profit:0})}
+function openSaleModal(id){
+  const p=state.products.find(x=>x.id===id);if(!p)return;
+  if((Number(p.qty)||0)<=0){alert('在庫がありません');return}
+  saleProductId.value=id;saleProductName.textContent=`${p.name}（現在庫 ${p.qty}点）`;saleQty.value='1';saleDate.value=new Date().toLocaleDateString('sv-SE');saleUnitPrice.value='';saleUnitPrice.placeholder=new Intl.NumberFormat('ja-JP').format(Number(p.currentPrice)||0);saleFee.value='0';saleShipping.value='0';saleOther.value='0';saleNet.value='';saleNet.dataset.manual='0';saleNote.value='';recalcSale();saleModal.classList.add('open');setTimeout(()=>saleUnitPrice.focus(),30)
+}
+function closeSaleModal(){saleModal.classList.remove('open')}
+function recalcSale(keepManual=false){
+  const p=state.products.find(x=>x.id===saleProductId.value);if(!p)return;
+  const qty=Math.max(0,Math.floor(parseNum(saleQty.value))),unit=parseNum(saleUnitPrice.value),gross=qty*unit,fee=parseNum(saleFee.value),shipping=parseNum(saleShipping.value),other=parseNum(saleOther.value),autoNet=gross-fee-shipping-other;
+  saleGross.value=yen(gross);
+  if(!keepManual&&saleNet.dataset.manual!=='1')saleNet.value=autoNet?String(autoNet):'';
+  const net=parseNum(saleNet.value),costBasis=qty*(Number(p.cost)||0),profit=net-costBasis;
+  saleCostBasis.textContent=yen(costBasis);saleProfit.textContent=yen(profit);saleProfit.className='kpi-value '+(profit>=0?'positive':'negative');saleRemainingQty.textContent=`${Math.max(0,(Number(p.qty)||0)-qty)}点`;saleDeductions.textContent=yen(fee+shipping+other)
+}
+function saveSale(){
+  const p=state.products.find(x=>x.id===saleProductId.value);if(!p)return;
+  const qty=Math.floor(parseNum(saleQty.value)),unitPrice=parseNum(saleUnitPrice.value),date=saleDate.value;
+  if(qty<=0){alert('販売数量を入力してください');return}if(qty>Number(p.qty)){alert('販売数量が現在庫を超えています');return}if(!date){alert('販売日を入力してください');return}if(unitPrice<0||!saleUnitPrice.value.trim()){alert('販売単価を入力してください');return}
+  const gross=qty*unitPrice,fee=parseNum(saleFee.value),shipping=parseNum(saleShipping.value),other=parseNum(saleOther.value),net=saleNet.value.trim()?parseNum(saleNet.value):gross-fee-shipping-other,costBasis=qty*(Number(p.cost)||0),profit=net-costBasis;
+  state.sales=state.sales||[];state.sales.push({id:crypto.randomUUID(),productId:p.id,productName:p.name,qty,unitPrice,gross,fee,shipping,other,net,costBasis,profit,soldAt:new Date(date+'T12:00:00').toISOString(),note:saleNote.value.trim(),createdAt:nowISO()});
+  p.qty=Math.max(0,(Number(p.qty)||0)-qty);snapshotPortfolio();closeSaleModal();saveState();
+}
+function deleteSale(id,productId){
+  const s=(state.sales||[]).find(x=>x.id===id);if(!s||!confirm('この販売記録を削除し、販売数量を在庫へ戻しますか？'))return;
+  const p=state.products.find(x=>x.id===productId);if(p)p.qty=(Number(p.qty)||0)+(Number(s.qty)||0);state.sales=state.sales.filter(x=>x.id!==id);snapshotPortfolio();saveState();if(p)openProductDetail(productId)
+}
+
+function portfolioMarketTotal(){return state.products.reduce((sum,p)=>sum+(Number(p.currentPrice)||0)*(Number(p.qty)||0),0)}
+function startUpdate(){
+  updateQueue=orderedProducts();updateIndex=0;
+  updateSession={startedAt:Date.now(),startTotal:portfolioMarketTotal(),updated:0,up:0,down:0,same:0,skipped:0};
+  showView('update');renderUpdateCard();
+  setTimeout(()=>openMarketForCurrentUpdate(),100);
+}
+function openMarketForCurrentUpdate(){const p=updateQueue[updateIndex];if(p?.url)openMarketWindow(p.id)}
+function updatePricePreview(){
+  const p=updateQueue[updateIndex],el=document.getElementById('updatePrice'),box=document.getElementById('updateDiffPreview');if(!p||!el||!box)return;
+  const raw=el.value.trim(),next=raw===''?Number(p.currentPrice)||0:parseNum(raw),prev=Number(p.currentPrice)||0;
+  if(!Number.isFinite(next)){box.innerHTML='<div style="grid-column:1/-1" class="negative">価格を確認してください</div>';return}
+  const diff=next-prev,rate=prev?diff/prev*100:0,cls=diff>0?'positive':diff<0?'negative':'';
+  box.innerHTML=`<div><span class="sub">前回</span><strong>${yen(prev)}</strong></div><div><span class="sub">今回</span><strong>${yen(next)}</strong></div><div><span class="sub">変動</span><strong class="${cls}">${diff>0?'+':''}${yen(diff)}<br><small>${diff>0?'+':''}${rate.toFixed(2)}%</small></strong></div>`;
+}
+function renderUpdateCard(){
+  if(!document.getElementById('updateCard'))return;
+  if(!state.products.length){updateCard.innerHTML='<div class="empty">先に商品を追加してください</div>';updateProgress.textContent='';return}
+  if(!updateQueue.length)updateQueue=orderedProducts();
+  if(updateIndex>=updateQueue.length){
+    const s=updateSession||{updated:0,up:0,down:0,same:0,skipped:0,startTotal:portfolioMarketTotal()};
+    const delta=portfolioMarketTotal()-s.startTotal;
+    updateCard.innerHTML=`<div class="empty"><strong style="font-size:22px">価格更新完了！</strong><div class="update-complete-grid"><div class="mini"><span class="sub">更新</span><strong>${s.updated}</strong></div><div class="mini"><span class="sub">上昇</span><strong class="positive">${s.up}</strong></div><div class="mini"><span class="sub">下降</span><strong class="negative">${s.down}</strong></div><div class="mini"><span class="sub">変動なし / スキップ</span><strong>${s.same} / ${s.skipped}</strong></div></div><div class="card" style="margin:0 0 16px"><span class="sub">更新による総資産変動</span><div class="kpi-value ${delta>=0?'positive':'negative'}" style="font-size:24px">${delta>=0?'+':''}${yen(delta)}</div></div><button class="btn" onclick="startUpdate()">もう一度更新</button></div>`;
+    updateProgress.textContent=`${updateQueue.length}/${updateQueue.length}`;return;
+  }
+  const p=updateQueue[updateIndex],last=latestHistoryFor(p.id),rate=Math.round(updateIndex/updateQueue.length*100);
+  updateProgress.textContent=`${updateIndex+1}/${updateQueue.length}`;
+  updateCard.innerHTML=`<div class="update-progress-wrap"><div class="update-progress-meta"><strong>${updateIndex+1} / ${updateQueue.length}</strong><span>${rate}% 完了</span></div><div class="update-progress-track"><div class="update-progress-fill" style="width:${rate}%"></div></div></div><div class="row" style="padding-top:0"><div><div class="row-title" style="font-size:20px">${escapeHtml(p.name)}</div><div class="row-meta">在庫 ${p.qty}・前回 ${yen(p.currentPrice)}</div></div>${p.url?`<a class="btn small secondary" href="${escapeAttr(p.url)}" target="_blank" rel="noopener">スニダンを開く</a>`:''}</div>
+    <div style="margin-top:16px"><label>今回価格</label><input id="updatePrice" class="big-input" inputmode="numeric" type="text" value="" placeholder="${new Intl.NumberFormat('ja-JP').format(Number(p.currentPrice)||0)}" oninput="updatePricePreview()" onfocus="this.select()" onclick="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();saveUpdateAndNext()}"></div>
+    <div id="updateDiffPreview" class="price-diff-preview"></div>
+    <div style="margin-top:12px"><label>価格種別</label><select id="updateType"><option value="lowest" ${state.settings.defaultPriceType==='lowest'?'selected':''}>最安出品価格</option><option value="latest" ${state.settings.defaultPriceType==='latest'?'selected':''}>最新成約価格</option></select></div>
+    <div style="margin-top:12px"><label class="inline-check"><input id="useCustomDate" type="checkbox" onchange="toggleCustomDate()">日時を指定して保存</label></div>
+    <div id="customDateWrap" style="display:none;margin-top:10px"><div class="form-grid two-col"><div><label>記録日</label><input id="updateDate" type="date"></div><div><label>時刻</label><select id="updateTimeMode" onchange="toggleUpdateTime()"><option value="unknown" selected>不明</option><option value="known">指定する</option></select></div></div><div id="updateTimeWrap" style="display:none;margin-top:10px"><label>時刻指定</label><input id="updateTime" type="time" value="12:00"></div></div>
+    <div class="actions"><button class="btn" onclick="saveUpdateAndNext()">保存して次へ</button><button class="btn secondary" onclick="savePreviousPriceAndNext()">前回価格のまま次へ</button><button class="btn secondary" onclick="readClipboardPrice('updatePrice').then?.(()=>updatePricePreview())">クリップボードから入力</button><button class="btn secondary" id="updateClipboardMonitorButton" onclick="toggleClipboardMonitor('updatePrice')">監視モードを開始</button><button class="btn secondary" onclick="skipUpdate()">スキップ</button></div>
+    <div class="update-shortcuts">PC操作：Enter 保存・→ 前回価格・↓ スキップ・↑ 前の商品</div><div id="updateClipboardMonitorStatus" class="note" style="display:none;margin-top:10px"></div><div class="sub">${last?`前回更新：${new Date(last.at).toLocaleString('ja-JP')}`:'価格履歴なし'}</div>${renderMiniPriceTimeline(p.id)}`;
+  refreshClipboardMonitorUi();updatePricePreview();setTimeout(()=>{const el=document.getElementById('updatePrice');if(el){el.focus();el.select()}},50);
+}
+function toggleCustomDate(){const wrap=document.getElementById('customDateWrap');if(!wrap)return;wrap.style.display=document.getElementById('useCustomDate').checked?'block':'none';if(document.getElementById('useCustomDate').checked&&!document.getElementById('updateDate').value){document.getElementById('updateDate').value=new Date().toLocaleDateString('sv-SE');document.getElementById('updateTimeMode').value='unknown';toggleUpdateTime()}}
+function toggleUpdateTime(){const known=document.getElementById('updateTimeMode')?.value==='known';const el=document.getElementById('updateTimeWrap');if(el)el.style.display=known?'block':'none'}
+function toLocalDateTimeInput(d){const pad=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`}
+function savePreviousPriceAndNext(){const p=updateQueue[updateIndex];if(!p)return;const input=document.getElementById('updatePrice');if(input)input.value=String(Number(p.currentPrice)||0);updatePricePreview();saveUpdateAndNext()}
+function saveUpdateAndNext(){
+  const p=updateQueue[updateIndex],input=document.getElementById('updatePrice');if(!p)return;
+  const raw=input?.value?.trim()||'',previous=Number(p.currentPrice)||0,price=raw===''?previous:parseNum(raw);
+  if(!Number.isFinite(price)||price<0){alert('正しい価格を入力してください');return}
+  if(previous>0&&(price>=previous*3||price<=previous/3)&&price!==previous&&!confirm(`価格が前回の約 ${(price/previous).toFixed(1)} 倍です。\n前回 ${yen(previous)} → 今回 ${yen(price)}\nこのまま保存しますか？`))return;
+  const type=document.getElementById('updateType').value,custom=document.getElementById('useCustomDate')?.checked,dateValue=document.getElementById('updateDate')?.value,timeKnown=document.getElementById('updateTimeMode')?.value==='known',timeValue=timeKnown?(document.getElementById('updateTime')?.value||'12:00'):'12:00';
+  if(custom&&!dateValue){alert('記録日を入力してください');return}
+  const at=custom?new Date(`${dateValue}T${timeValue}:00`).toISOString():nowISO();
+  addOrOverwritePriceRecord({id:crypto.randomUUID(),productId:p.id,price,type,at,timeKnown:custom?timeKnown:true,source:custom?'manual-backfill':'manual'});refreshCurrentPrice(p.id);
+  if(updateSession){updateSession.updated++;if(price>previous)updateSession.up++;else if(price<previous)updateSession.down++;else updateSession.same++}
+  if(!custom||new Date(at).toDateString()===new Date().toDateString())snapshotPortfolio();updateIndex++;saveState();renderUpdateCard();setTimeout(()=>openMarketForCurrentUpdate(),80);
+}
+function skipUpdate(){if(updateSession)updateSession.skipped++;updateIndex++;renderUpdateCard();setTimeout(()=>openMarketForCurrentUpdate(),80)}
+function previousUpdate(){if(updateIndex>0){updateIndex--;renderUpdateCard();setTimeout(()=>openMarketForCurrentUpdate(),80)}}
+document.addEventListener('keydown',event=>{if(!document.getElementById('update')?.classList.contains('active'))return;if(event.key==='ArrowRight'){event.preventDefault();savePreviousPriceAndNext()}else if(event.key==='ArrowDown'){event.preventDefault();skipUpdate()}else if(event.key==='ArrowUp'){event.preventDefault();previousUpdate()}});
+
+function latestHistoryFor(productId){
+  return state.history.filter(h=>h.productId===productId).sort((a,b)=>new Date(b.at)-new Date(a.at))[0];
+}
+function latestHistoryAtOrBefore(productId,at){
+  return state.history.filter(h=>h.productId===productId&&new Date(h.at)<=new Date(at)).sort((a,b)=>new Date(b.at)-new Date(a.at))[0];
+}
+function renderHistorySelectors(){
+  const prev=historyProduct.value;
+  historyProduct.innerHTML=orderedProducts().map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  if(state.products.some(p=>p.id===prev))historyProduct.value=prev;
+}
+function aggregateDailyRows(rows,mode='latest'){
+  const groups={};
+  rows.forEach(r=>{
+    const d=new Date(r.at).toLocaleDateString('sv-SE');
+    (groups[d]||(groups[d]=[])).push(r);
+  });
+  return Object.entries(groups).sort(([a],[b])=>a.localeCompare(b)).map(([date,items])=>{
+    items.sort((a,b)=>new Date(a.at)-new Date(b.at));
+    const vals=items.map(x=>Number(x.price)||0);
+    let price=items[items.length-1].price;
+    if(mode==='average')price=Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+    if(mode==='min')price=Math.min(...vals);
+    if(mode==='max')price=Math.max(...vals);
+    return {date,price,count:items.length};
+  });
+}
+function openBackfillModal(){
+  if(!state.products.length){alert('先に商品を登録してください');return}
+  backfillProduct.innerHTML=orderedProducts().map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  backfillProduct.value=historyProduct.value||orderedProducts()[0].id;backfillPrice.value='';
+  backfillDate.value=new Date().toLocaleDateString('sv-SE');backfillTimeMode.value='unknown';backfillTime.value='12:00';toggleBackfillTime();
+  backfillType.value=state.settings.defaultPriceType||'lowest';backfillNote.value='';backfillModal.classList.add('open');
+}
+function toggleBackfillTime(){backfillTimeWrap.style.display=backfillTimeMode.value==='known'?'block':'none'}
+function closeBackfillModal(){backfillModal.classList.remove('open')}
+function saveBackfill(){
+  const productId=backfillProduct.value,price=parseNum(backfillPrice.value),date=backfillDate.value,timeKnown=backfillTimeMode.value==='known',time=timeKnown?(backfillTime.value||'12:00'):'12:00';
+  if(!productId||price<0||!date){alert('商品・価格・日付を入力してください');return}
+  const at=new Date(`${date}T${time}:00`).toISOString();
+  state.history.push({id:crypto.randomUUID(),productId,price,type:backfillType.value,at,timeKnown,source:'manual-backfill',note:backfillNote.value.trim()});
+  const newest=latestHistoryFor(productId),p=state.products.find(x=>x.id===productId);if(p&&newest)p.currentPrice=Number(newest.price)||0;
+  saveState();closeBackfillModal();historyProduct.value=productId;renderHistory();
+}
+function renderHistory(){
+  if(!historyProduct)return;
+  const productId=historyProduct.value;
+  const rows=filterRowsByRange(state.history.filter(h=>h.productId===productId).sort((a,b)=>new Date(a.at)-new Date(b.at)),'history');
+  const daily=aggregateDailyRows(rows,state.settings.dailyAggregation||'latest');
+  drawLineChart('priceChart',daily.map(r=>({x:r.date,y:r.price})),'価格');
+  historyTable.innerHTML=rows.length?`<table><thead><tr><th>日時</th><th>価格</th><th>種別</th><th>操作</th></tr></thead><tbody>${[...rows].reverse().map(r=>`<tr><td>${formatHistoryDate(r)}${r.correctedAt?' <span class="status">修正済み</span>':''}</td><td>${yen(r.price)}</td><td>${r.type==='lowest'?'最安出品':'最新成約'}</td><td><button class="btn small secondary" onclick="editHistoryRecord('${r.id}')">修正</button> <button class="btn small danger" onclick="deleteHistoryRecord('${r.id}')">削除</button></td></tr>`).join('')}</tbody></table><p class="note">通常の価格更新は、同じ商品・価格種別を${PRICE_OVERWRITE_WINDOW_MINUTES}分以内に再更新すると直前の履歴を上書きします。</p>`:'<div class="empty">履歴がありません</div>';
+}
+
+function renderSettings(){
+  feePercent.value=state.settings.feePercent;shippingPercent.value=state.settings.shippingPercent;goalAmount.value=state.settings.goalAmount;realizedProfitGoal.value=state.settings.realizedProfitGoal??1000000;defaultPriceType.value=state.settings.defaultPriceType;dailyAggregation.value=state.settings.dailyAggregation||'latest';loadCloudConfigUi();
+}
+
+function saveSettings(){
+  state.settings={...state.settings,feePercent:Number(feePercent.value)||0,shippingPercent:Number(shippingPercent.value)||0,goalAmount:Number(goalAmount.value)||0,realizedProfitGoal:Number(realizedProfitGoal.value)||0,defaultPriceType:defaultPriceType.value,dailyAggregation:dailyAggregation.value};saveCloudConfigUi();
+  snapshotPortfolio();saveState();alert('設定を保存しました');
+}
+async function exportData(label='backup'){
+  try{
+    const images={};
+    for(const p of state.products){
+      const image=await getProductImage(p.id);
+      if(image)images[p.id]=image;
+    }
+    const backup={...state,backupVersion:2,exportedAt:nowISO(),images};
+    const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`tc-asset-${label}-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    if(label==='backup')alert(`画像込みバックアップを作成しました（画像 ${Object.keys(images).length}件）`);
+  }catch(err){
+    console.error(err);
+    alert('バックアップの作成に失敗しました');
+  }
+}
+async function importData(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=async()=>{try{
+    const raw=JSON.parse(r.result);
+    await exportData('pre-import');
+    state={...structuredClone(initialState),...raw,settings:{...initialState.settings,...(raw.settings||{})},products:(raw.products||[]).map((p,i)=>({...p,cardType:p.cardType||'ポケモンカード',favorite:!!p.favorite,sortOrder:Number.isFinite(p.sortOrder)?p.sortOrder:i})),sales:Array.isArray(raw.sales)?raw.sales:[],dataVersion:13};
+    const images=raw.images&&typeof raw.images==='object'?raw.images:{};
+    for(const [productId,imageData] of Object.entries(images)){
+      if(typeof imageData==='string'&&imageData.startsWith('data:image/'))await putProductImage(productId,imageData);
+    }
+    saveState();alert(`読み込みました（画像 ${Object.keys(images).length}件）`)
+  }catch(err){console.error(err);alert('読み込みに失敗しました')}finally{e.target.value=''}};r.readAsText(f);
+}
+function resetAll(){
+  if(!confirm('すべてのデータを削除します。元に戻せません。'))return;
+  state=structuredClone(initialState);saveState();
+}
+
+
+async function openProductDetail(id){
+  const p=state.products.find(x=>x.id===id);if(!p)return;
+  detailTitle.textContent=p.name;detailSubtitle.textContent=`${p.cardType||'未分類'}・${p.category}・在庫 ${p.qty}`;
+  const a=analyzeProduct(p,'balanced'),img=await getProductImage(id),gross=p.currentPrice*p.qty,net=gross*(1-totalDeduction()/100),cost=p.cost*p.qty,profit=net-cost;
+  const rows=state.history.filter(h=>h.productId===id).sort((x,y)=>new Date(x.at)-new Date(y.at));
+  const sales=productSales(id),saleTotal=salesTotals(sales);
+  detailContent.innerHTML=`
+    ${img?`<img class="detail-image" src="${img}" alt="${escapeAttr(p.name)}">`:''}
+    <div class="actions" style="margin-top:12px"><button class="btn" onclick="closeProductDetail();openQuickUpdateWithMarket('${p.id}')">この商品の価格を更新</button><button class="btn secondary" onclick="closeProductDetail();openSaleModal('${p.id}')">この商品を販売登録</button></div>
+    <div class="detail-grid" style="margin-top:12px">
+      <div class="card"><div class="kpi-label">現在価格</div><div class="kpi-value">${yen(p.currentPrice)}</div></div>
+      <div class="card"><div class="kpi-label">現在総資産</div><div class="kpi-value">${yen(gross)}</div></div>
+      <div class="card"><div class="kpi-label">想定手取り</div><div class="kpi-value">${yen(net)}</div></div>
+      <div class="card"><div class="kpi-label">手取り損益</div><div class="kpi-value ${profit>=0?'positive':'negative'}">${yen(profit)}</div></div>
+      <div class="card"><div class="kpi-label">7日変動</div><div class="kpi-value ${a.ch7>=0?'positive':'negative'}">${pct(a.ch7)}</div></div>
+      <div class="card"><div class="kpi-label">30日変動</div><div class="kpi-value ${a.ch30>=0?'positive':'negative'}">${pct(a.ch30)}</div></div>
+      <div class="card"><div class="kpi-label">最高値から</div><div class="kpi-value ${a.drawdown>=0?'positive':'negative'}">${pct(a.drawdown)}</div></div>
+      <div class="card"><div class="kpi-label">AI判断</div><div class="analysis-item ${a.klass}"><strong>${a.signal}</strong></div></div>
+    </div>
+    <div class="breakdown-grid" style="margin-top:12px"><div class="card"><div class="kpi-label">過去最高価格（ATH）</div><div class="kpi-value">${yen(a.high)}</div><div class="sub">${athInfo(p.id).date||'記録なし'}</div></div><div class="card"><div class="kpi-label">目標価格</div><div class="kpi-value">${p.targetPrice?yen(p.targetPrice):'未設定'}</div><div class="sub">${p.targetPrice?pct((p.targetPrice/(p.currentPrice||1)-1)*100)+' 上': '編集画面から設定'}</div></div></div>
+    ${p.investmentMemo?`<div class="section-title"><h2>投資メモ</h2></div><div class="memo-box">${escapeHtml(p.investmentMemo)}</div>`:''}
+    <div class="actions"><button class="btn secondary" onclick="closeProductDetail();showView('simulator');setTimeout(()=>{simProduct.value='${p.id}';renderSimulator()},30)">この商品を試算</button></div>
+    <div class="section-title"><h2>販売実績</h2></div>
+    <div class="detail-grid"><div class="card"><div class="kpi-label">累計販売数</div><div class="kpi-value">${saleTotal.qty}点</div></div><div class="card"><div class="kpi-label">累計売上</div><div class="kpi-value">${yen(saleTotal.gross)}</div></div><div class="card"><div class="kpi-label">累計手残り</div><div class="kpi-value">${yen(saleTotal.net)}</div></div><div class="card"><div class="kpi-label">累計売却利益</div><div class="kpi-value ${saleTotal.profit>=0?'positive':'negative'}">${yen(saleTotal.profit)}</div></div></div>
+    ${sales.length?`<table><thead><tr><th>販売日</th><th>数量</th><th>売上</th><th>手数料</th><th>送料等</th><th>手残り</th><th>利益</th><th></th></tr></thead><tbody>${[...sales].reverse().map(s=>`<tr><td>${new Date(s.soldAt).toLocaleDateString('ja-JP')}</td><td>${s.qty}</td><td>${yen(s.gross)}</td><td>${yen(s.fee)}</td><td>${yen((s.shipping||0)+(s.other||0))}</td><td>${yen(s.net)}</td><td class="${s.profit>=0?'positive':'negative'}">${yen(s.profit)}</td><td><button class="btn small danger" onclick="deleteSale('${s.id}','${p.id}')">削除</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">販売実績はまだありません</div>'}
+    <div class="section-title"><h2>個別推移</h2></div>
+    <div class="card">
+      <div class="chart-controls">
+        <div><label>表示項目</label><select id="detailMetric" onchange="renderDetailChart('${p.id}')"><option value="price">単価</option><option value="gross">現在総資産</option><option value="net">想定手取り</option><option value="cost">取得総額</option><option value="profit">含み損益</option></select></div>
+        <div><label>期間</label><select id="detailRange" onchange="toggleCustomRange('detail');renderDetailChart('${p.id}')"><option value="7">7日</option><option value="30">30日</option><option value="90" selected>90日</option><option value="365">1年</option><option value="all">全期間</option><option value="custom">任意期間</option></select></div>
+      </div>
+      <div id="detailCustomRange" class="custom-range"><div><label>開始日</label><input id="detailStart" type="date" onchange="renderDetailChart('${p.id}')"></div><div><label>終了日</label><input id="detailEnd" type="date" onchange="renderDetailChart('${p.id}')"></div></div>
+      <div class="chart-wrap"><canvas id="detailChart" width="900" height="260"></canvas><div id="detailChartTooltip" class="chart-tooltip"></div></div>
+    </div>
+    <div class="section-title"><h2>個別AI分析</h2></div>
+    <div class="analysis-item ${a.klass}"><strong>${a.signal}</strong><br>${profitAdvice(a,'balanced')}</div>
+    <div class="analysis-item">総合スコア ${a.score}/100・信頼度 ${a.confidence}（履歴 ${a.rows.length}件）<br>短期期待レンジ：弱気 ${yen(a.downside)} ／ 中心 ${yen(a.center)} ／ 強気 ${yen(a.upside)}</div>
+    <div class="section-title"><h2>価格履歴</h2></div>
+    ${rows.length?`<table><thead><tr><th>日時</th><th>価格</th><th>種別</th></tr></thead><tbody>${[...rows].reverse().map(r=>`<tr><td>${formatHistoryDate(r)}</td><td>${yen(r.price)}</td><td>${r.type==='lowest'?'最安出品':'最新成約'}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">履歴がありません</div>'}
+    <div class="actions"><button class="btn secondary" onclick="closeProductDetail();openProductModal('${p.id}')">編集</button>${p.url?`<button class="btn secondary" onclick="openMarketWindow('${p.id}')">スニダンを右側で開く</button>`:''}</div>`;
+  detailModal.classList.add('open');
+  setTimeout(()=>renderDetailChart(id),30);
+}
+function renderDetailChart(id){
+  const p=state.products.find(x=>x.id===id);if(!p||!document.getElementById('detailChart'))return;
+  const metric=document.getElementById('detailMetric')?.value||'price';
+  const labels={price:'単価',gross:'現在総資産',net:'想定手取り',cost:'取得総額',profit:'含み損益'};
+  drawLineChart('detailChart',individualSeries(p,metric,'detail'),labels[metric]);
+}
+function closeProductDetail(){detailModal.classList.remove('open')}
+
+async function exportPortfolioHtml(){
+  const products=orderedProducts(),images={};
+  for(const p of products)images[p.id]=await getProductImage(p.id);
+  const exportState={generatedAt:nowISO(),settings:state.settings,products,history:state.history,images};
+  const data=escapeScriptJson(exportState);
+  const page=`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>トレカポートフォリオ</title>
+<style>body{margin:0;background:#f3f4f6;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic",sans-serif}.wrap{max-width:1000px;margin:auto;padding:18px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:15px;padding:14px;margin-bottom:10px}.k{color:#6b7280;font-size:12px}.v{font-size:22px;font-weight:800}.item{display:flex;gap:12px;align-items:center}.item img{width:72px;height:72px;object-fit:cover;border-radius:10px;background:#eee}.grow{flex:1}.name{font-weight:800}.meta{font-size:12px;color:#6b7280;margin-top:4px}.right{text-align:right}.pos{color:#059669}.neg{color:#dc2626}.tabs{display:flex;gap:8px;margin:12px 0}.tabs button{border:1px solid #ddd;background:#fff;border-radius:999px;padding:8px 12px}.tabs button.on{background:#2563eb;color:white}@media(min-width:720px){.grid{grid-template-columns:repeat(4,1fr)}}</style></head><body><div class="wrap"><h1>トレカポートフォリオ</h1><div id="generated" class="meta"></div><div class="tabs"><button id="allBtn" class="on" onclick="render('all')">全商品</button><button id="favBtn" onclick="render('favorites')">お気に入り</button></div><div id="app"></div></div>
+<script>const D=${data};const y=n=>new Intl.NumberFormat('ja-JP',{style:'currency',currency:'JPY',maximumFractionDigits:0}).format(n||0);function render(scope){allBtn.classList.toggle('on',scope==='all');favBtn.classList.toggle('on',scope==='favorites');const ps=D.products.filter(p=>scope==='all'||p.favorite),fee=(D.settings.feePercent||0)+(D.settings.shippingPercent||0),gross=ps.reduce((s,p)=>s+p.currentPrice*p.qty,0),net=gross*(1-fee/100),cost=ps.reduce((s,p)=>s+p.cost*p.qty,0),profit=net-cost;generated.textContent='書き出し日時：'+new Date(D.generatedAt).toLocaleString('ja-JP');app.innerHTML='<div class="grid"><div class="card"><div class="k">現在総資産</div><div class="v">'+y(gross)+'</div></div><div class="card"><div class="k">想定手取り</div><div class="v">'+y(net)+'</div></div><div class="card"><div class="k">取得総額</div><div class="v">'+y(cost)+'</div></div><div class="card"><div class="k">含み損益</div><div class="v '+(profit>=0?'pos':'neg')+'">'+y(profit)+'</div></div></div><h2>商品一覧</h2>'+ps.map(p=>'<div class="card item">'+(D.images[p.id]?'<img src="'+D.images[p.id]+'">':'')+'<div class="grow"><div class="name">'+esc(p.name)+(p.favorite?' ★':'')+'</div><div class="meta">'+esc(p.cardType||'未分類')+'・'+esc(p.category)+'・在庫 '+p.qty+'</div></div><div class="right"><div class="name">'+y(p.currentPrice)+'</div><div class="meta">評価額 '+y(p.currentPrice*p.qty)+'</div></div></div>').join('');}function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}render('all');<\/script></body></html>`;
+  const blob=new Blob([page],{type:'text/html;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`portfolio-view-${new Date().toISOString().slice(0,10)}.html`;a.click();URL.revokeObjectURL(a.href);
+}
+
+
+function renderAiSelectors(){
+  const el=document.getElementById('aiScope');if(!el)return;
+  const prev=el.value;
+  el.innerHTML='<option value="portfolio">ポートフォリオ全体</option><option value="favorites">お気に入りのみ</option>'+orderedProducts().map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  if(prev==='portfolio'||prev==='favorites'||state.products.some(p=>p.id===prev))el.value=prev;
+}
+function openAiAnalysis(){
+  if(!state.products.length){alert('先に商品を登録してください');return}
+  renderAiSelectors();aiModal.classList.add('open');renderAiAnalysis();
+}
+function closeAiAnalysis(){aiModal.classList.remove('open')}
+function productHistory(productId){return state.history.filter(h=>h.productId===productId).sort((a,b)=>new Date(a.at)-new Date(b.at))}
+function historicalPriceAtOrBefore(rows,daysAgo){
+  const target=Date.now()-daysAgo*86400000;
+  const eligible=rows.filter(r=>new Date(r.at).getTime()<=target);
+  return eligible.length?eligible[eligible.length-1].price:(rows[0]?.price||0);
+}
+function analyzeProduct(p,style='balanced'){
+  const rows=productHistory(p.id),prices=rows.map(r=>Number(r.price)||0).filter(v=>v>0);
+  const current=Number(p.currentPrice)||0,cost=Number(p.cost)||0;
+  const netUnit=current*(1-totalDeduction()/100);
+  const profitRate=cost?((netUnit-cost)/cost*100):0;
+  const high=prices.length?Math.max(...prices):current,low=prices.length?Math.min(...prices):current;
+  const drawdown=high?((current-high)/high*100):0;
+  const p7=historicalPriceAtOrBefore(rows,7),p30=historicalPriceAtOrBefore(rows,30);
+  const ch7=p7?((current-p7)/p7*100):0,ch30=p30?((current-p30)/p30*100):0;
+  const returns=[];
+  for(let i=1;i<prices.length;i++)if(prices[i-1])returns.push((prices[i]-prices[i-1])/prices[i-1]*100);
+  const mean=returns.length?returns.reduce((a,b)=>a+b,0)/returns.length:0;
+  const vol=returns.length?Math.sqrt(returns.reduce((s,v)=>s+(v-mean)**2,0)/returns.length):0;
+  const confidence=rows.length>=12?'高':rows.length>=5?'中':'低';
+  let score=50;
+  score+=Math.max(-20,Math.min(20,ch30*1.2));
+  score+=Math.max(-12,Math.min(12,profitRate*.25));
+  score+=drawdown<-20?-12:drawdown<-10?-5:5;
+  score-=Math.min(12,vol*1.5);
+  score=Math.max(0,Math.min(100,Math.round(score)));
+  let signal='様子見',klass='signal-hold';
+  const sellThreshold=style==='defensive'?15:style==='growth'?45:25;
+  if(profitRate>=sellThreshold && ch7<0 && drawdown<-5){signal='分割利確を検討';klass='signal-sell'}
+  else if(profitRate>=sellThreshold+15 && current>=high*.97){signal='高値圏：一部利確候補';klass='signal-sell'}
+  else if(ch30>8 && ch7>0 && drawdown>-8){signal='上昇継続：保有優勢';klass='signal-buy'}
+  else if(ch30<-10 || drawdown<-25){signal='下落警戒：出口条件を確認';klass='signal-risk'}
+  const baseVol=Math.max(3,Math.min(25,vol*Math.sqrt(Math.max(1,Math.min(10,prices.length)))));
+  const trend=Math.max(-15,Math.min(15,ch30*.35));
+  return {
+    p,rows,current,cost,netUnit,profitRate,high,low,drawdown,ch7,ch30,vol,confidence,score,signal,klass,
+    downside:Math.round(current*(1+(-baseVol+trend*.2)/100)),
+    center:Math.round(current*(1+trend/100)),
+    upside:Math.round(current*(1+(baseVol+trend)/100))
+  };
+}
+function renderAiAnalysis(){
+  const target=document.getElementById('aiScope')?.value||'portfolio';
+  const style=document.getElementById('aiStyle')?.value||'balanced';
+  if(!state.products.length){aiResult.innerHTML='<div class="empty">分析できる商品がありません</div>';return}
+  if(target!=='portfolio'&&target!=='favorites'){
+    const p=state.products.find(x=>x.id===target);if(!p)return;
+    const a=analyzeProduct(p,style);
+    aiResult.innerHTML=`
+      <div class="ai-grid">
+        <div class="card"><div class="kpi-label">総合スコア</div><div class="kpi-value">${a.score}/100</div></div>
+        <div class="card"><div class="kpi-label">判断</div><div class="analysis-item ${a.klass}"><strong>${a.signal}</strong></div></div>
+        <div class="card"><div class="kpi-label">データ信頼度</div><div class="kpi-value">${a.confidence}</div><div class="sub">${a.rows.length}件の履歴</div></div>
+      </div>
+      <div class="analysis-section"><h3>価格変動</h3>
+        <div class="analysis-item">7日変動：<strong class="${a.ch7>=0?'positive':'negative'}">${pct(a.ch7)}</strong> ／ 30日変動：<strong class="${a.ch30>=0?'positive':'negative'}">${pct(a.ch30)}</strong></div>
+        <div class="analysis-item">過去高値 ${yen(a.high)}、高値から ${pct(a.drawdown)}。記録期間の安値は ${yen(a.low)}。</div>
+      </div>
+      <div class="analysis-section"><h3>利益と利確タイミング</h3>
+        <div class="analysis-item">手取り単価 ${yen(a.netUnit)}、取得単価比の損益率は <strong class="${a.profitRate>=0?'positive':'negative'}">${pct(a.profitRate)}</strong>。</div>
+        <div class="analysis-item ${a.klass}"><strong>${a.signal}</strong><br>${profitAdvice(a,style)}</div>
+      </div>
+      <div class="analysis-section"><h3>短期期待レンジ</h3>
+        <div class="analysis-item">弱気 ${yen(a.downside)} ／ 中心 ${yen(a.center)} ／ 強気 ${yen(a.upside)}</div>
+        <div class="sub">保存された価格履歴から算出した参考レンジで、将来価格を保証するものではありません。</div>
+      </div>`;
+    lastAiReportText=buildProductReport(a,style);
+    return;
+  }
+  const baseProducts=target==='favorites'?state.products.filter(p=>p.favorite):state.products;
+  if(!baseProducts.length){aiResult.innerHTML='<div class="empty">分析対象の商品がありません</div>';return}
+  const analyses=baseProducts.map(p=>analyzeProduct(p,style));
+  const gross=currentGross(),net=currentNet(),cost=currentCost(),profitRate=cost?(net-cost)/cost*100:0;
+  const totalValue=gross||1;
+  const sortedValue=[...baseProducts].sort((a,b)=>b.currentPrice*b.qty-a.currentPrice*a.qty);
+  const topShare=(sortedValue[0]?.currentPrice*sortedValue[0]?.qty||0)/totalValue*100;
+  const breadth=analyses.filter(a=>a.ch30>0).length/Math.max(1,analyses.length)*100;
+  const avgScore=Math.round(analyses.reduce((s,a)=>s+a.score,0)/analyses.length);
+  const sellCandidates=analyses.filter(a=>a.signal.includes('利確')).sort((a,b)=>b.profitRate-a.profitRate).slice(0,5);
+  const risks=analyses.filter(a=>a.signal.includes('警戒')).sort((a,b)=>a.ch30-b.ch30).slice(0,5);
+  const movers=[...analyses].sort((a,b)=>b.ch30-a.ch30).slice(0,5);
+  const marketText=breadth>=65?'保有商品の多くが30日ベースで上昇しており、ポートフォリオ内の地合いは強めです。':breadth<=35?'30日ベースで上昇している商品が少なく、保有商品の地合いは弱めです。':'上昇・下落が混在しており、銘柄選別が必要な局面です。';
+  aiResult.innerHTML=`
+    <div class="ai-grid">
+      <div class="card"><div class="kpi-label">総合スコア</div><div class="kpi-value">${avgScore}/100</div></div>
+      <div class="card"><div class="kpi-label">含み損益率</div><div class="kpi-value ${profitRate>=0?'positive':'negative'}">${pct(profitRate)}</div><div class="sub">手取りベース</div></div>
+      <div class="card"><div class="kpi-label">上昇銘柄比率</div><div class="kpi-value">${pct(breadth)}</div><div class="sub">30日比較</div></div>
+    </div>
+    <div class="analysis-section"><h3>市場・ポートフォリオ動向</h3>
+      <div class="analysis-item">${marketText}</div>
+      <div class="analysis-item ${topShare>35?'signal-risk':'signal-hold'}">最大保有商品の構成比は ${pct(topShare)}。${topShare>35?'単一商品への集中が高いため、利確時期を分散する価値があります。':'集中度は現時点で極端ではありません。'}</div>
+    </div>
+    <div class="analysis-section"><h3>30日上昇率 上位</h3>
+      ${movers.map(a=>`<div class="analysis-item"><strong>${escapeHtml(a.p.name)}</strong>：${pct(a.ch30)} ／ 高値比 ${pct(a.drawdown)}</div>`).join('')}
+    </div>
+    <div class="analysis-section"><h3>利確候補</h3>
+      ${sellCandidates.length?sellCandidates.map(a=>`<div class="analysis-item signal-sell"><strong>${escapeHtml(a.p.name)}</strong>：${a.signal}<br>手取り損益率 ${pct(a.profitRate)}、30日 ${pct(a.ch30)}</div>`).join(''):'<div class="analysis-item signal-hold">現在のルールでは明確な利確候補はありません。</div>'}
+    </div>
+    <div class="analysis-section"><h3>注意商品</h3>
+      ${risks.length?risks.map(a=>`<div class="analysis-item signal-risk"><strong>${escapeHtml(a.p.name)}</strong>：30日 ${pct(a.ch30)}、高値比 ${pct(a.drawdown)}</div>`).join(''):'<div class="analysis-item signal-buy">大きな下落警戒シグナルは出ていません。</div>'}
+    </div>
+    <div class="analysis-section"><h3>次の行動</h3><div class="analysis-item">${portfolioAdvice({topShare,breadth,sellCandidates},style)}</div></div>`;
+  lastAiReportText=buildPortfolioReport({avgScore,profitRate,breadth,topShare,marketText,sellCandidates,risks});
+}
+function profitAdvice(a,style){
+  if(a.signal.includes('高値圏'))return '保有数量の20〜30%を先に売却し、残りは高値更新またはトレーリング条件で管理する案が合理的です。';
+  if(a.signal.includes('分割利確'))return '一括売却ではなく、数量を2〜4回に分けて利益を固定しつつ上昇余地を残す案が向いています。';
+  if(a.signal.includes('上昇継続'))return '上昇基調ですが、高値から10〜15%下落した場合の見直し条件を先に決めると判断がぶれにくくなります。';
+  if(a.signal.includes('下落警戒'))return '追加購入よりも、再販・需給・取引状況を確認し、許容損失または売却期限を設定する局面です。';
+  return style==='defensive'?'含み益が15〜20%を超えた商品から少量ずつ利益を固定する運用が合います。':'次の更新まで保有し、30日トレンドと過去高値への接近を確認します。';
+}
+function portfolioAdvice(x,style){
+  const parts=[];
+  if(x.topShare>35)parts.push('最大保有商品を一度に売らず、複数価格帯に分けて集中リスクを下げる。');
+  if(x.sellCandidates.length)parts.push(`利確候補 ${x.sellCandidates.length}商品について、まず20〜30%の分割売却を検討する。`);
+  if(x.breadth<35)parts.push('地合いが弱いため、新規購入より現金比率と出口管理を優先する。');
+  else if(x.breadth>65)parts.push('地合いは強いが、上昇時ほど目標価格と売却数量を事前設定する。');
+  if(style==='growth')parts.push('強気運用では高値更新を狙いつつ、高値から15%下落を見直し条件にする。');
+  if(style==='defensive')parts.push('守備的運用では手取り損益率20%以上の商品から利益を固定する。');
+  return parts.join(' ');
+}
+function buildProductReport(a,style){
+  return `${a.p.name} AI分析\n総合スコア: ${a.score}/100\n判断: ${a.signal}\nデータ信頼度: ${a.confidence}（${a.rows.length}件）\n7日変動: ${pct(a.ch7)}\n30日変動: ${pct(a.ch30)}\n過去高値: ${yen(a.high)}\n高値比: ${pct(a.drawdown)}\n手取り損益率: ${pct(a.profitRate)}\n期待レンジ: 弱気 ${yen(a.downside)} / 中心 ${yen(a.center)} / 強気 ${yen(a.upside)}\n所見: ${profitAdvice(a,style)}\n※保存済みデータだけを用いた参考分析です。`;
+}
+function buildPortfolioReport(x){
+  return `ポートフォリオAI分析\n総合スコア: ${x.avgScore}/100\n手取り含み損益率: ${pct(x.profitRate)}\n30日上昇銘柄比率: ${pct(x.breadth)}\n最大商品構成比: ${pct(x.topShare)}\n地合い: ${x.marketText}\n利確候補: ${x.sellCandidates.map(a=>a.p.name).join('、')||'なし'}\n注意商品: ${x.risks.map(a=>a.p.name).join('、')||'なし'}\n※保存済みデータだけを用いた参考分析です。`;
+}
+async function copyAiReport(){
+  if(!lastAiReportText)return;
+  try{await navigator.clipboard.writeText(lastAiReportText);alert('分析文をコピーしました')}
+  catch(e){prompt('以下をコピーしてください',lastAiReportText)}
+}
+
+
+function athInfo(productId){
+  const rows=state.history.filter(h=>h.productId===productId);
+  if(!rows.length){const p=state.products.find(x=>x.id===productId);return {price:Number(p?.currentPrice)||0,date:''}}
+  const max=Math.max(...rows.map(r=>Number(r.price)||0));
+  const row=rows.filter(r=>(Number(r.price)||0)===max).sort((a,b)=>new Date(a.at)-new Date(b.at))[0];
+  return {price:max,date:row?new Date(row.at).toLocaleDateString('ja-JP'):''};
+}
+function renderDailyUpdateSummary(){
+  const el=document.getElementById('dailyUpdateSummary');if(!el)return;
+  const products=orderedProducts(),cut=Date.now()-21600000,done=products.filter(p=>{const h=latestHistoryFor(p.id);return h&&new Date(h.at).getTime()>=cut}).length;
+  const rate=products.length?done/products.length*100:0;
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;gap:12px"><strong>${done}/${products.length}商品 更新済み</strong><span>${pct(rate)}</span></div><div class="progress" style="margin-top:10px"><div style="width:${rate}%"></div></div><div class="sub">直近6時間以内の価格更新を「更新済み」と判定</div>`;
+}
+function renderRankings(){
+  const profitEl=document.getElementById('profitRanking'),gapEl=document.getElementById('athGapRanking');if(!profitEl||!gapEl)return;
+  const rows=state.products.map(p=>{const net=p.currentPrice*p.qty*(1-totalDeduction()/100),cost=p.cost*p.qty,profit=net-cost,ath=athInfo(p.id).price,gap=ath?((p.currentPrice/ath)-1)*100:0;return {p,profit,gap}});
+  const line=(x,value,klass='')=>`<div class="row"><button class="link-button" onclick="openProductDetail('${x.p.id}')">${escapeHtml(x.p.name)}</button><strong class="${klass}">${value}</strong></div>`;
+  profitEl.innerHTML=[...rows].sort((a,b)=>b.profit-a.profit).slice(0,5).map(x=>line(x,yen(x.profit),x.profit>=0?'positive':'negative')).join('')||'<div class="empty">データなし</div>';
+  gapEl.innerHTML=[...rows].sort((a,b)=>a.gap-b.gap).slice(0,5).map(x=>line(x,pct(x.gap),x.gap>=0?'positive':'negative')).join('')||'<div class="empty">データなし</div>';
+}
+let clipboardMonitorEnabled=false;
+let clipboardMonitorTargetId='';
+let clipboardMonitorTimer=null;
+let clipboardMonitorLastText='';
+let clipboardMonitorBusy=false;
+
+function extractClipboardPrice(text){
+  const normalized=String(text||'').replace(/[,，￥¥\s]/g,'');
+  const match=normalized.match(/-?\d+(?:\.\d+)?/);
+  if(!match)return null;
+  const n=Number(match[0]);
+  return Number.isFinite(n)&&n>=0?n:null;
+}
+function clipboardStatusElement(){
+  return document.getElementById(clipboardMonitorTargetId==='quickNewPrice'?'quickClipboardMonitorStatus':'updateClipboardMonitorStatus');
+}
+function setClipboardMonitorStatus(message,isError=false){
+  const el=clipboardStatusElement();if(!el)return;
+  el.style.display='block';el.textContent=message;
+  el.style.background=isError?'#fef2f2':'#eff6ff';el.style.color=isError?'#991b1b':'#1e40af';
+}
+function refreshClipboardMonitorUi(){
+  const items=[['quickNewPrice','quickClipboardMonitorButton','quickClipboardMonitorStatus'],['updatePrice','updateClipboardMonitorButton','updateClipboardMonitorStatus']];
+  items.forEach(([target,buttonId,statusId])=>{
+    const button=document.getElementById(buttonId),status=document.getElementById(statusId);
+    if(button)button.textContent=clipboardMonitorEnabled&&clipboardMonitorTargetId===target?'監視モードを停止':'監視モードを開始';
+    if(status&&!(clipboardMonitorEnabled&&clipboardMonitorTargetId===target))status.style.display='none';
+  });
+  if(clipboardMonitorEnabled)setClipboardMonitorStatus('監視中：スニダンで価格をコピーし、このアプリへ戻ると自動入力します。');
+}
+async function pollClipboardPrice(force=false){
+  if(!clipboardMonitorEnabled||clipboardMonitorBusy||document.hidden||!document.hasFocus())return;
+  const target=document.getElementById(clipboardMonitorTargetId);if(!target)return;
+  if(!navigator.clipboard?.readText){setClipboardMonitorStatus('このブラウザではクリップボード読み取りに対応していません。',true);return;}
+  clipboardMonitorBusy=true;
+  try{
+    const text=await (window.electronAPI?.readClipboardText ? window.electronAPI.readClipboardText() : navigator.clipboard.readText());
+    if(!force&&text===clipboardMonitorLastText)return;
+    clipboardMonitorLastText=text;
+    const n=extractClipboardPrice(text);
+    if(n===null){setClipboardMonitorStatus('コピー内容を価格として認識できませんでした。',true);return;}
+    target.value=String(n);target.dispatchEvent(new Event('input',{bubbles:true}));target.focus();target.select();
+    setClipboardMonitorStatus(`自動入力しました：${new Intl.NumberFormat('ja-JP').format(n)}円`);
+  }catch(e){
+    setClipboardMonitorStatus('読み取りが許可されていません。「監視モードを開始」をもう一度押し、ブラウザの許可を有効にしてください。',true);
+  }finally{clipboardMonitorBusy=false;}
+}
+async function toggleClipboardMonitor(targetId){
+  if(clipboardMonitorEnabled&&clipboardMonitorTargetId===targetId){
+    clipboardMonitorEnabled=false;clipboardMonitorTargetId='';clearInterval(clipboardMonitorTimer);clipboardMonitorTimer=null;refreshClipboardMonitorUi();return;
+  }
+  clipboardMonitorEnabled=true;clipboardMonitorTargetId=targetId;clipboardMonitorLastText='';
+  clearInterval(clipboardMonitorTimer);clipboardMonitorTimer=setInterval(()=>pollClipboardPrice(false),1000);
+  refreshClipboardMonitorUi();
+  await pollClipboardPrice(true);
+}
+async function readClipboardPrice(targetId){
+  try{
+    const text=await (window.electronAPI?.readClipboardText ? window.electronAPI.readClipboardText() : navigator.clipboard.readText()),n=extractClipboardPrice(text);
+    if(n===null){alert('価格として読み取れませんでした');return}
+    const el=document.getElementById(targetId);if(el){el.value=n;el.dispatchEvent(new Event('input',{bubbles:true}));el.focus();el.select()}
+  }catch(e){alert('クリップボードを読み取れませんでした。ブラウザの許可を確認してください。')}
+}
+window.addEventListener('focus',()=>setTimeout(()=>pollClipboardPrice(false),80));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(()=>pollClipboardPrice(false),80)});
+document.addEventListener('paste',e=>{
+  if(!clipboardMonitorEnabled)return;
+  const text=e.clipboardData?.getData('text/plain')||'';const n=extractClipboardPrice(text);if(n===null)return;
+  const el=document.getElementById(clipboardMonitorTargetId);if(!el)return;e.preventDefault();clipboardMonitorLastText=text;el.value=String(n);el.dispatchEvent(new Event('input',{bubbles:true}));el.focus();el.select();setClipboardMonitorStatus(`自動入力しました：${new Intl.NumberFormat('ja-JP').format(n)}円`);
+});
+function renderSimulatorSelectors(){
+  const el=document.getElementById('simProduct');if(!el)return;const prev=el.value;
+  el.innerHTML=orderedProducts().map(p=>`<option value="${p.id}">${escapeHtml(p.name)}（${p.qty}点）</option>`).join('');if(state.products.some(p=>p.id===prev))el.value=prev;
+}
+function scenarioPrice(p,scenario){const ath=athInfo(p.id).price;return Math.round(({current:p.currentPrice,manual:parseNum(document.getElementById('simPrice')?.value),ath,target:p.targetPrice||p.currentPrice,bear:p.currentPrice*.85,base:p.currentPrice,bull:p.currentPrice*1.2}[scenario])||0)}
+function renderSimulator(){
+  renderSimulatorSelectors();const p=state.products.find(x=>x.id===document.getElementById('simProduct')?.value);if(!p){if(document.getElementById('simResult'))simResult.innerHTML='<div class="empty">商品を追加してください</div>';return}
+  const scenario=document.getElementById('simScenario')?.value||'current',price=scenarioPrice(p,scenario);if(document.getElementById('simPrice')){simPrice.disabled=scenario!=='manual';simPrice.value=price}if(document.getElementById('simQty')&&!simQty.value)simQty.value=p.qty;
+  if(document.getElementById('simCostNote'))simCostNote.textContent=`設定の販売手数料 ${pct(state.settings.feePercent)} ＋ 送料・その他 ${pct(state.settings.shippingPercent)} ＝ 合計控除 ${pct(totalDeduction())} を自動適用します。`;
+  recalcSimulator();renderPortfolioSimulator();
+}
+function setSimPercent(percent){const p=state.products.find(x=>x.id===simProduct.value);if(!p)return;simQty.value=Math.max(percent?1:0,Math.ceil(p.qty*percent/100));recalcSimulator()}
+function recalcSimulator(){
+  const p=state.products.find(x=>x.id===document.getElementById('simProduct')?.value);if(!p)return;const qty=Math.min(Number(p.qty)||0,Math.max(0,Math.floor(parseNum(simQty.value)))),price=parseNum(simPrice.value),gross=qty*price,deduct=gross*totalDeduction()/100,net=gross-deduct,cost=qty*(Number(p.cost)||0),profit=net-cost,remain=(Number(p.qty)||0)-qty,remainValue=remain*(Number(p.currentPrice)||0),totalAfter=net+remainValue;
+  simResult.innerHTML=`<div class="card"><div class="kpi-label">売上総額</div><div class="kpi-value">${yen(gross)}</div></div><div class="card"><div class="kpi-label">手取り</div><div class="kpi-value">${yen(net)}</div><div class="sub">控除 ${yen(deduct)}</div></div><div class="card"><div class="kpi-label">実現利益</div><div class="kpi-value ${profit>=0?'positive':'negative'}">${yen(profit)}</div></div><div class="card"><div class="kpi-label">販売後在庫</div><div class="kpi-value">${remain}点</div><div class="sub">残存評価 ${yen(remainValue)}</div></div><div class="card"><div class="kpi-label">売却後総価値</div><div class="kpi-value">${yen(totalAfter)}</div><div class="sub">手取り＋残存評価</div></div><div class="card"><div class="kpi-label">平均取得単価</div><div class="kpi-value">${yen(p.cost)}</div><div class="sub">残在庫も変更なし</div></div>`;
+}
+let portfolioSimPercent=100;
+function setPortfolioSimPercent(v){portfolioSimPercent=v;renderPortfolioSimulator()}
+function renderPortfolioSimulator(){
+  const table=document.getElementById('portfolioSimTable'),result=document.getElementById('portfolioSimResult');if(!table||!result)return;const rows=orderedProducts().map(p=>{const qty=Math.ceil((Number(p.qty)||0)*portfolioSimPercent/100),gross=qty*p.currentPrice,net=gross*(1-totalDeduction()/100),profit=net-qty*p.cost;return {p,qty,gross,net,profit}});const total=rows.reduce((a,r)=>{a.gross+=r.gross;a.net+=r.net;a.profit+=r.profit;a.qty+=r.qty;return a},{gross:0,net:0,profit:0,qty:0});
+  table.innerHTML=`<div class="sub" style="margin:10px 0">各商品の在庫を ${portfolioSimPercent}% 売却（端数切り上げ）</div><table><thead><tr><th>商品</th><th>数量</th><th>手取り</th><th>利益</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${escapeHtml(r.p.name)}</td><td>${r.qty}</td><td>${yen(r.net)}</td><td class="${r.profit>=0?'positive':'negative'}">${yen(r.profit)}</td></tr>`).join('')}</tbody></table>`;
+  result.innerHTML=`<div class="card"><div class="kpi-label">売却数量</div><div class="kpi-value">${total.qty}点</div></div><div class="card"><div class="kpi-label">売上総額</div><div class="kpi-value">${yen(total.gross)}</div></div><div class="card"><div class="kpi-label">手取り</div><div class="kpi-value">${yen(total.net)}</div></div><div class="card"><div class="kpi-label">実現利益</div><div class="kpi-value ${total.profit>=0?'positive':'negative'}">${yen(total.profit)}</div></div>`;
+}
+
+function drawLineChart(id,data,label){
+  const c=document.getElementById(id);if(!c)return;const ctx=c.getContext('2d'),w=c.width,h=c.height,tooltip=document.getElementById(id+'Tooltip');
+  ctx.clearRect(0,0,w,h);ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;
+  for(let i=1;i<5;i++){const y=20+(h-50)*i/5;ctx.beginPath();ctx.moveTo(45,y);ctx.lineTo(w-15,y);ctx.stroke()}
+  if(!data.length){ctx.fillStyle='#6b7280';ctx.font='16px sans-serif';ctx.textAlign='center';ctx.fillText('データがありません',w/2,h/2);c.onmousemove=null;c.onmouseleave=null;if(tooltip)tooltip.style.display='none';return}
+  const vals=data.map(d=>Number(d.y)||0),min=Math.min(...vals),max=Math.max(...vals),range=(max-min)||1;
+  const pts=data.map((d,i)=>({x:45+(w-65)*(data.length===1?0.5:i/(data.length-1)),y:20+(h-50)*(1-(d.y-min)/range),d}));
+  ctx.strokeStyle='#2563eb';ctx.lineWidth=3;ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
+  ctx.fillStyle='#2563eb';pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill()});
+  ctx.fillStyle='#6b7280';ctx.font='12px sans-serif';ctx.textAlign='left';ctx.fillText(`${label}  ${yen(vals[vals.length-1])}`,45,h-10);ctx.textAlign='right';ctx.fillText(`高値 ${yen(max)} / 安値 ${yen(min)}`,w-15,h-10);
+  c.onmousemove=e=>{if(!tooltip)return;const r=c.getBoundingClientRect(),sx=c.width/r.width,sy=c.height/r.height,mx=(e.clientX-r.left)*sx,my=(e.clientY-r.top)*sy;let n=pts[0],dist=Infinity;pts.forEach(p=>{const d=Math.hypot(p.x-mx,p.y-my);if(d<dist){dist=d;n=p}});if(dist>25){tooltip.style.display='none';return}tooltip.innerHTML=`${n.d.x}<br><strong>${label}：${yen(n.d.y)}</strong>`;tooltip.style.display='block';tooltip.style.left=(n.x/sx)+'px';tooltip.style.top=(n.y/sy)+'px'};
+  c.onmouseleave=()=>{if(tooltip)tooltip.style.display='none'};
+}
+function escapeHtml(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function escapeAttr(s=''){return escapeHtml(s)}
+
+function renderMiniPriceTimeline(productId){
+  const rows=state.history.filter(h=>h.productId===productId).sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,5);
+  if(!rows.length)return '<div class="note" style="margin-top:14px">価格履歴はまだありません</div>';
+  return `<div style="margin-top:16px"><strong>直近の価格タイムライン</strong><div style="display:grid;gap:7px;margin-top:8px">${rows.map((r,i)=>{const prev=rows[i+1],diff=prev?Number(r.price)-Number(prev.price):null;return `<div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:7px"><span class="sub">${formatHistoryDate(r)}</span><span><strong>${yen(r.price)}</strong>${diff===null?'':` <small class="${diff>=0?'positive':'negative'}">${diff>=0?'+':''}${yen(diff)}</small>`}</span></div>`}).join('')}</div></div>`;
+}
+
+
+function formatFileSize(bytes){
+  const n=Number(bytes)||0;
+  if(n<1024)return `${n} B`;
+  if(n<1024*1024)return `${(n/1024).toFixed(1)} KB`;
+  return `${(n/1024/1024).toFixed(1)} MB`;
+}
+function backupCounts(data){
+  return {
+    products:Array.isArray(data?.products)?data.products.length:0,
+    history:Array.isArray(data?.history)?data.history.length:0,
+    sales:Array.isArray(data?.sales)?data.sales.length:0
+  };
+}
+async function refreshAutomaticBackups(){
+  const el=document.getElementById('automaticBackupList');
+  if(!el)return;
+  if(!window.electronAPI?.listAutomaticBackups){el.innerHTML='<div class="empty">自動バックアップ一覧はElectron版で利用できます。</div>';return}
+  el.innerHTML='<div class="muted">バックアップを確認中…</div>';
+  try{
+    const r=await window.electronAPI.listAutomaticBackups();
+    if(!r?.entries?.length){el.innerHTML=`<div class="empty">自動バックアップはまだありません。<br><small>データを変更すると約1秒後に作成されます。</small></div>`;return}
+    const rows=[];
+    for(const entry of r.entries){
+      let counts={products:'-',history:'-',sales:'-'};
+      try{const x=await window.electronAPI.readAutomaticBackup(entry.name);counts=backupCounts(x.data)}catch(_e){}
+      rows.push(`<tr><td>${new Date(entry.modifiedAt).toLocaleString('ja-JP')}</td><td>商品 ${counts.products}／履歴 ${counts.history}／販売 ${counts.sales}</td><td>${formatFileSize(entry.size)}</td><td><button class="btn small secondary" onclick="restoreAutomaticBackup('${escapeAttr(entry.name)}')">この時点へ復元</button></td></tr>`);
+    }
+    el.innerHTML=`<p class="note">保存先：${escapeHtml(r.dir)}／最新30世代</p><div style="overflow:auto"><table><thead><tr><th>作成日時</th><th>データ件数</th><th>サイズ</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+  }catch(e){el.innerHTML=`<div class="empty negative">一覧取得失敗：${escapeHtml(e.message)}</div>`}
+}
+async function restoreAutomaticBackup(name){
+  try{
+    const r=await window.electronAPI.readAutomaticBackup(name);
+    const raw=r.data||{};
+    const c=backupCounts(raw);
+    if(c.products===0&&c.history===0)throw new Error('商品0件・履歴0件のバックアップのため復元を中止しました');
+    const current=backupCounts(state);
+    if(!confirm(`このバックアップへ復元します。\n\n現在：商品${current.products}件・履歴${current.history}件\n復元後：商品${c.products}件・履歴${c.history}件\n\n現在の状態を先に自動退避します。`))return;
+    await createSafetyBackup();
+    state={...structuredClone(initialState),...raw,settings:{...initialState.settings,...(raw.settings||{})},products:(raw.products||[]).map((p,i)=>({...p,cardType:p.cardType||'ポケモンカード',favorite:!!p.favorite,sortOrder:Number.isFinite(p.sortOrder)?p.sortOrder:i,targetPrice:Number(p.targetPrice)||0,investmentMemo:p.investmentMemo||''})),history:Array.isArray(raw.history)?raw.history:[],sales:Array.isArray(raw.sales)?raw.sales:[],portfolioSnapshots:Array.isArray(raw.portfolioSnapshots)?raw.portfolioSnapshots:[],dataVersion:14};
+    localStorage.setItem(KEY,JSON.stringify(state));
+    renderAll();
+    addSyncLog('ローカル復元','成功',`${name}／商品${c.products}件・履歴${c.history}件`);
+    await refreshAutomaticBackups();
+    alert('バックアップから復元しました。');
+  }catch(e){addSyncLog('ローカル復元','失敗',e.message);alert(`復元失敗：${e.message}`)}
+}
+async function restoreLatestAutomaticBackup(){
+  try{
+    const r=await window.electronAPI?.listAutomaticBackups();
+    if(!r?.entries?.length)throw new Error('復元できる自動バックアップがありません');
+    await restoreAutomaticBackup(r.entries[0].name);
+  }catch(e){alert(e.message)}
+}
+
+const SYNC_LOG_KEY='tc_pc_sync_log_v1';
+function getSyncLogs(){try{return JSON.parse(localStorage.getItem(SYNC_LOG_KEY)||'[]')}catch(e){return []}}
+function addSyncLog(action,result,detail=''){const logs=getSyncLogs();logs.unshift({at:nowISO(),action,result,detail});localStorage.setItem(SYNC_LOG_KEY,JSON.stringify(logs.slice(0,100)));renderSyncLogs()}
+function renderSyncLogs(){const el=document.getElementById('syncLogList');if(!el)return;const logs=getSyncLogs();el.innerHTML=logs.length?`<table><thead><tr><th>日時</th><th>操作</th><th>結果</th><th>内容</th></tr></thead><tbody>${logs.map(x=>`<tr><td>${new Date(x.at).toLocaleString('ja-JP')}</td><td>${escapeHtml(x.action)}</td><td class="${x.result==='成功'?'positive':x.result==='失敗'?'negative':''}">${escapeHtml(x.result)}</td><td>${escapeHtml(x.detail||'')}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">同期ログはまだありません</div>'}
+function clearSyncLogs(){if(!confirm('同期ログを消去しますか？'))return;localStorage.removeItem(SYNC_LOG_KEY);renderSyncLogs()}
+function cloudDifference(local,remote){
+  const lp=new Map((local?.products||[]).map(p=>[p.id,p])),rp=new Map((remote?.products||[]).map(p=>[p.id,p]));
+  let localOnly=0,cloudOnly=0,changed=0;
+  for(const [id,p] of lp){if(!rp.has(id))localOnly++;else{const q=rp.get(id);if(Number(p.currentPrice||0)!==Number(q.currentPrice||0)||Number(p.qty||0)!==Number(q.qty||0)||String(p.name||'')!==String(q.name||''))changed++}}
+  for(const id of rp.keys())if(!lp.has(id))cloudOnly++;
+  const lh=new Set((local?.history||[]).map(h=>h.id||`${h.productId}|${h.at}|${h.price}|${h.type}`)),rh=new Set((remote?.history||[]).map(h=>h.id||`${h.productId}|${h.at}|${h.price}|${h.type}`));
+  let localHistoryOnly=0,cloudHistoryOnly=0;for(const id of lh)if(!rh.has(id))localHistoryOnly++;for(const id of rh)if(!lh.has(id))cloudHistoryOnly++;
+  return {localOnly,cloudOnly,changed,localHistoryOnly,cloudHistoryOnly};
+}
+function renderCloudDiff(local,remote){const el=document.getElementById('cloudDiffPanel');if(!el)return;if(!remote){el.innerHTML='<div class="empty">クラウドデータはありません。PCから初回アップロードできます。</div>';return}const d=cloudDifference(local,remote);el.innerHTML=`<div class="detail-grid"><div><div class="kpi-label">PCだけの商品</div><div class="kpi-value">${d.localOnly}</div></div><div><div class="kpi-label">Cloudだけの商品</div><div class="kpi-value">${d.cloudOnly}</div></div><div><div class="kpi-label">内容が異なる商品</div><div class="kpi-value">${d.changed}</div></div><div><div class="kpi-label">PCだけの価格履歴</div><div class="kpi-value">${d.localHistoryOnly}</div></div><div><div class="kpi-label">Cloudだけの価格履歴</div><div class="kpi-value">${d.cloudHistoryOnly}</div></div></div><p class="note">アップロードはPCの全データをCloudへ反映します。自動マージはまだ行いません。</p>`}
+
+const CLOUD_CONFIG_KEY='tc_pc_cloud_config_v1';let cloudUploading=false;
+function loadCloudConfigUi(){try{const c=JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY)||'{}');if(document.getElementById('cloudProjectUrl'))cloudProjectUrl.value=c.url||cloudProjectUrl.value;if(document.getElementById('cloudPublishableKey'))cloudPublishableKey.value=c.key||cloudPublishableKey.value;if(document.getElementById('cloudEmail'))cloudEmail.value=c.email||'';updateCloudStatus(c.access_token?'ログイン済み（自動アップロードなし）':'未ログイン')}catch(e){}}
+function saveCloudConfigUi(extra={}){const old=JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY)||'{}');const c={...old,url:cloudProjectUrl?.value?.trim(),key:cloudPublishableKey?.value?.trim(),email:cloudEmail?.value?.trim(),...extra};localStorage.setItem(CLOUD_CONFIG_KEY,JSON.stringify(c));return c}
+function updateCloudStatus(msg,ok=false){const el=document.getElementById('cloudSyncStatus');if(el){el.textContent=msg;el.style.color=ok?'#15803d':''}}
+async function cloudSignIn(){try{const c=saveCloudConfigUi();updateCloudStatus('ログイン中…');const r=await fetch(`${c.url}/auth/v1/token?grant_type=password`,{method:'POST',headers:{apikey:c.key,'Content-Type':'application/json'},body:JSON.stringify({email:cloudEmail.value.trim(),password:cloudPassword.value})});const d=await r.json();if(!r.ok)throw new Error(d.msg||d.error_description||'ログイン失敗');saveCloudConfigUi({access_token:d.access_token,refresh_token:d.refresh_token,user_id:d.user?.id});cloudPassword.value='';updateCloudStatus('ログインしました。自動アップロードは行いません',true)}catch(e){updateCloudStatus(`ログイン失敗：${e.message}`)}}
+async function buildCloudBackup(){const images={};for(const p of state.products){const image=await getProductImage(p.id);if(image)images[p.id]=image}return {...state,dataVersion:14,backupVersion:3,exportedAt:nowISO(),cloudUpdatedAt:nowISO(),images}}
+function cloudCounts(data){return {products:Array.isArray(data?.products)?data.products.length:0,history:Array.isArray(data?.history)?data.history.length:0,sales:Array.isArray(data?.sales)?data.sales.length:0}}
+function requireCloudConfig(){const c=saveCloudConfigUi();if(!c.access_token||!c.user_id)throw new Error('先にログインしてください');return c}
+async function fetchCloudBackup(allowMissing=false){const c=requireCloudConfig();const path=`${c.user_id}/latest.json`;const r=await fetch(`${c.url}/storage/v1/object/tc-backups/${path}`,{headers:{apikey:c.key,Authorization:`Bearer ${c.access_token}`}});if(r.status===404&&allowMissing)return null;if(!r.ok)throw new Error((await r.text())||'クラウド読込失敗');return r.json()}
+async function cloudInspect(){try{updateCloudStatus('クラウド確認中…');const remote=await fetchCloudBackup(true);const l=cloudCounts(state);renderCloudDiff(state,remote);if(!remote){updateCloudStatus(`クラウドデータなし／PC 商品${l.products}・履歴${l.history}`,true);addSyncLog('クラウド確認','成功',`Cloudなし／PC 商品${l.products}・履歴${l.history}`);return}const r=cloudCounts(remote);updateCloudStatus(`比較：PC 商品${l.products}・履歴${l.history} ／ Cloud 商品${r.products}・履歴${r.history}`,true);addSyncLog('クラウド確認','成功',`PC 商品${l.products}・履歴${l.history}／Cloud 商品${r.products}・履歴${r.history}`)}catch(e){updateCloudStatus(`確認失敗：${e.message}`);addSyncLog('クラウド確認','失敗',e.message)}}
+async function uploadCloudObject(c,path,body){const r=await fetch(`${c.url}/storage/v1/object/tc-backups/${path}`,{method:'POST',headers:{apikey:c.key,Authorization:`Bearer ${c.access_token}`,'Content-Type':'application/json','x-upsert':'true'},body});if(!r.ok)throw new Error((await r.text())||'アップロード失敗')}
+async function cloudUploadNow(showAlert=false){if(cloudUploading)return;try{cloudUploading=true;const c=requireCloudConfig();const local=cloudCounts(state);if(local.products===0&&local.history===0)throw new Error('商品0件・履歴0件のため、安全装置がアップロードを禁止しました');updateCloudStatus('同期前バックアップ作成中…');await createSafetyBackup();const remote=await fetchCloudBackup(true);const rc=cloudCounts(remote);const warning=remote?`PC：商品${local.products}件・履歴${local.history}件\nCloud：商品${rc.products}件・履歴${rc.history}件`:`PC：商品${local.products}件・履歴${local.history}件\nCloud：データなし`;if(!confirm(`${warning}\n\nクラウドへアップロードしますか？\n現在のクラウドデータは世代バックアップ後に更新します。`)){updateCloudStatus('アップロードをキャンセルしました');return}updateCloudStatus('安全アップロード中…');const stamp=new Date().toISOString().replace(/[:.]/g,'-');if(remote)await uploadCloudObject(c,`${c.user_id}/versions/cloud-before-${stamp}.json`,JSON.stringify(remote));const backup=await buildCloudBackup();const body=JSON.stringify(backup);await uploadCloudObject(c,`${c.user_id}/versions/pc-${stamp}.json`,body);await uploadCloudObject(c,`${c.user_id}/latest.json`,body);updateCloudStatus(`安全同期完了 ${new Date().toLocaleTimeString('ja-JP')}`,true);addSyncLog('PC→Cloud','成功',`商品${local.products}件・履歴${local.history}件`);renderCloudDiff(state,backup);if(showAlert)alert('クラウドへ安全にアップロードしました')}catch(e){updateCloudStatus(`同期失敗：${e.message}`);addSyncLog('PC→Cloud','失敗',e.message);if(showAlert)alert(e.message)}finally{cloudUploading=false}}
+async function cloudRestoreNow(){try{const remote=await fetchCloudBackup(false);const rc=cloudCounts(remote);if(rc.products===0&&rc.history===0)throw new Error('クラウドデータが空のため復元を中止しました');const lc=cloudCounts(state);if(!confirm(`クラウドから復元します。\nPC：商品${lc.products}件・履歴${lc.history}件\nCloud：商品${rc.products}件・履歴${rc.history}件\n\n現在のPCデータを自動バックアップしてから置き換えますか？`))return;await createSafetyBackup();state={...structuredClone(initialState),...remote,settings:{...initialState.settings,...(remote.settings||{})},products:(remote.products||[]).map((p,i)=>({...p,cardType:p.cardType||'ポケモンカード',favorite:!!p.favorite,sortOrder:Number.isFinite(p.sortOrder)?p.sortOrder:i})),sales:Array.isArray(remote.sales)?remote.sales:[],history:Array.isArray(remote.history)?remote.history:[],portfolioSnapshots:Array.isArray(remote.portfolioSnapshots)?remote.portfolioSnapshots:[],dataVersion:14};const images=remote.images&&typeof remote.images==='object'?remote.images:{};for(const [productId,imageData] of Object.entries(images)){if(typeof imageData==='string'&&imageData.startsWith('data:image/'))await putProductImage(productId,imageData)}saveState();updateCloudStatus('クラウドから復元しました',true);addSyncLog('Cloud→PC','成功',`商品${rc.products}件・履歴${rc.history}件`);renderCloudDiff(state,remote);alert(`復元しました（商品${rc.products}件・履歴${rc.history}件）`)}catch(e){updateCloudStatus(`復元失敗：${e.message}`);addSyncLog('Cloud→PC','失敗',e.message);alert(e.message)}}
+
+renderAll();toggleCustomRange('portfolio');toggleCustomRange('history');
+
+
+// Electron版：OSクリップボードの変化をバックグラウンドで受け取る
+if(window.electronAPI?.onClipboardChanged){
+  window.electronAPI.onClipboardChanged((text)=>{
+    if(!clipboardMonitorEnabled) return;
+    const n=extractClipboardPrice(text);
+    if(n===null || text===clipboardMonitorLastText) return;
+    const el=document.getElementById(clipboardMonitorTargetId);
+    if(!el) return;
+    clipboardMonitorLastText=text;
+    el.value=String(n);
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+    setClipboardMonitorStatus(`自動入力しました：${new Intl.NumberFormat('ja-JP').format(n)}円`);
+  });
+}
+</script>
 </body>
 </html>
