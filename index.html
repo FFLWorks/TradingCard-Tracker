@@ -177,7 +177,7 @@
       </div>
 
       <div class="cloud-form auth-form">
-        <label>メールアドレス<input id="cloudEmail" type="email" autocomplete="email"></label>
+        <label>メールアドレス<input id="cloudEmail" type="email" autocomplete="username"></label>
         <label>パスワード<input id="cloudPassword" type="password" autocomplete="current-password"></label>
         <div class="cloud-actions">
           <button id="cloudSignIn" class="primary">ログイン</button>
@@ -188,10 +188,10 @@
 
       <div id="cloudStatus" class="cloud-status">未接続</div>
       <div class="cloud-actions sync-actions">
-        <button id="cloudUpload" class="primary">現在データをアップロード</button>
-        <button id="cloudDownload" class="secondary">最新データをダウンロード</button>
+        <button id="cloudDownload" class="primary">PCの最新データを取得</button>
       </div>
-      <p class="cloud-note">PCではこのページを開いてJSONを読み込み、「アップロード」。スマホはログイン済みなら起動時に自動同期します。手動更新も可能です。</p>
+      <div id="cloudMeta" class="cloud-status">クラウド情報：未取得</div>
+      <p class="cloud-note">スマホは閲覧専用です。データの変更とアップロードはPC版で行い、このボタンで必ずPCの最新データを取得します。</p>
     </div>
   </dialog>
 
