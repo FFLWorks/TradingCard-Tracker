@@ -1,34 +1,15 @@
-# Card Nexus v14.5.1 — スマホWeb版
+# Card Nexus Web App v14.5.3
 
-このフォルダの**中身をすべて**Gitリポジトリの最上位へアップロードしてください。
-`index.html` がリポジトリ直下にあるため、静的ホスティングでそのまま公開できます。
+このフォルダの中身をGitHubリポジトリ直下へアップしてください。
 
-## 含まれるもの
+## PC版との同期
+PC版と同じSupabase Project URLとPublishable Keyを設定済みです。
+スマホ側でPC版と同じメールアドレス・パスワードでログインし、「クラウドから復元」または同期操作を行ってください。
 
-- `index.html`：スマホ・PC共通Webアプリ
-- `manifest.webmanifest`：ホーム画面追加用設定
-- `icon.svg`：アプリアイコン
-- `.gitignore`：個人データや不要ファイルの誤登録防止
+## GitHub Pages
+Settings → Pages → Deploy from a branch → main / root を選択します。
 
-## 初回設定
-
-公開後、Card Nexusの「設定」から以下を入力します。
-
-1. Supabase Project URL
-2. Supabase Publishable Key
-3. メールアドレスとパスワード
-
-Project URLとPublishable KeyはGit公開用ファイルには埋め込んでいません。ブラウザへ入力した設定は、その端末のローカルストレージに保存されます。
-
-## GitHub Pagesで公開する場合
-
-1. このフォルダ内の全ファイルをリポジトリ直下へアップロード
-2. GitHubの `Settings` → `Pages`
-3. `Deploy from a branch` を選択
-4. 対象ブランチと `/ (root)` を指定
-
-## 注意
-
-- SupabaseのRLSとStorage Policyを必ず有効にしてください。
-- `service_role` キー、パスワード、バックアップJSON、実際の資産データはGitへ上げないでください。
-- Electron専用の自動ローカルバックアップ機能はWeb版では利用できません。手動バックアップとクラウド同期は利用できます。
+## セキュリティ
+- service_role keyは絶対に登録しないでください。
+- Supabase Auth、RLS、Storage Policyを有効にしてください。
+- 実在庫バックアップや個人データはGitへアップしないでください。
