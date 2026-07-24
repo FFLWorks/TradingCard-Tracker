@@ -1,15 +1,12 @@
-# Card Nexus Web App v14.5.3
+# Card Nexus v15.0 Web / Smartphone
 
-このフォルダの中身をGitHubリポジトリ直下へアップしてください。
+このフォルダの中身をGitHubリポジトリ直下へすべてアップロードしてください。
 
-## PC版との同期
-PC版と同じSupabase Project URLとPublishable Keyを設定済みです。
-スマホ側でPC版と同じメールアドレス・パスワードでログインし、「クラウドから復元」または同期操作を行ってください。
+## 共通設定
+Supabase Project URL、Publishable key、Storage Bucketは `config.js` に集約されています。PC版の `renderer/config.js` と同一です。
 
-## GitHub Pages
-Settings → Pages → Deploy from a branch → main / root を選択します。
+## 更新後
+GitHub Pagesの反映後、スマホでページを完全再読み込みして、PC版と同じメールアドレスでログインしてください。
 
 ## セキュリティ
-- service_role keyは絶対に登録しないでください。
-- Supabase Auth、RLS、Storage Policyを有効にしてください。
-- 実在庫バックアップや個人データはGitへアップしないでください。
+`service_role` key、パスワード、バックアップJSON、実データはGitHubへ置かないでください。

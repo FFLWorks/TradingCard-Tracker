@@ -182,7 +182,7 @@
   <div class="topbar">
     <div>
       <h1><button class="app-title-button" onclick="goDashboardTop()">Card Nexus</button></h1>
-      <div class="sub">資産管理・価格履歴・想定手取り・売却判断　v14.5.1</div>
+      <div class="sub">資産管理・価格履歴・想定手取り・売却判断　v15.0.0</div>
     </div>
     <div class="top-actions"><div class="mode-switch" aria-label="表示モード"><button id="marketModeBtn" onclick="setDisplayMode('market')">市場価格</button><button id="netModeBtn" onclick="setDisplayMode('net')">手取り</button></div><div class="pill" id="lastUpdatedPill">未更新</div></div>
   </div>
@@ -311,7 +311,7 @@
   </section>
 
   <section id="settings" class="view">
-    <div class="section-title"><h2>設定 <small style="font-size:13px;color:var(--muted);font-weight:600">Card Nexus v14.5.1</small></h2></div>
+    <div class="section-title"><h2>設定 <small style="font-size:13px;color:var(--muted);font-weight:600">Card Nexus v15.0.0</small></h2></div>
     <div class="card">
       <div class="form-grid two-col">
         <div><label>販売手数料（%）</label><input id="feePercent" type="number" step="0.1" min="0"></div>
@@ -328,8 +328,9 @@
     <div class="section-title"><h2>安全なクラウド同期</h2></div>
     <div class="card">
       <div class="form-grid two-col">
-        <div><label>Supabase Project URL</label><input id="cloudProjectUrl" type="url" value="https://xvecmqbsiljlyjtastwh.supabase.co" placeholder="https://YOUR-PROJECT.supabase.co"></div>
-        <div><label>Publishable key</label><input id="cloudPublishableKey" type="password" value="sb_publishable_mMTAuijlD8OsFl-ZrwRaDA_8CW6UguT" placeholder="Supabase Publishable Key"></div>
+        <div><label>Supabase Project URL（一元管理）</label><input id="cloudProjectUrl" type="url" readonly></div>
+        <div><label>Publishable key（一元管理）</label><input id="cloudPublishableKey" type="password" readonly></div>
+        <div><label>Storage Bucket（一元管理）</label><input id="cloudStorageBucket" type="text" readonly></div>
         <div><label>メールアドレス</label><input id="cloudEmail" type="email"></div>
         <div><label>パスワード</label><input id="cloudPassword" type="password"></div>
       </div>
@@ -503,6 +504,7 @@
   </div>
 </div>
 
+<script src="./config.js"></script>
 <script>
 const KEY='tc_asset_tracker_v1';
 const initialState={dataVersion:14,settings:{feePercent:8,shippingPercent:1,goalAmount:4000000,realizedProfitGoal:1000000,defaultPriceType:'lowest',dailyAggregation:'latest',staleDays:3,displayMode:'net'},products:[],history:[],sales:[],portfolioSnapshots:[]};
@@ -1529,17 +1531,40 @@ function cloudDifference(local,remote){
 }
 function renderCloudDiff(local,remote){const el=document.getElementById('cloudDiffPanel');if(!el)return;if(!remote){el.innerHTML='<div class="empty">クラウドデータはありません。PCから初回アップロードできます。</div>';return}const d=cloudDifference(local,remote);el.innerHTML=`<div class="detail-grid"><div><div class="kpi-label">PCだけの商品</div><div class="kpi-value">${d.localOnly}</div></div><div><div class="kpi-label">Cloudだけの商品</div><div class="kpi-value">${d.cloudOnly}</div></div><div><div class="kpi-label">内容が異なる商品</div><div class="kpi-value">${d.changed}</div></div><div><div class="kpi-label">PCだけの価格履歴</div><div class="kpi-value">${d.localHistoryOnly}</div></div><div><div class="kpi-label">Cloudだけの価格履歴</div><div class="kpi-value">${d.cloudHistoryOnly}</div></div></div><p class="note">アップロードはPCの全データをCloudへ反映します。自動マージはまだ行いません。</p>`}
 
-const CLOUD_CONFIG_KEY='tc_pc_cloud_config_v1';let cloudUploading=false;
-function loadCloudConfigUi(){try{const c=JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY)||'{}');if(document.getElementById('cloudProjectUrl'))cloudProjectUrl.value=c.url||cloudProjectUrl.value;if(document.getElementById('cloudPublishableKey'))cloudPublishableKey.value=c.key||cloudPublishableKey.value;if(document.getElementById('cloudEmail'))cloudEmail.value=c.email||'';updateCloudStatus(c.access_token?'ログイン済み（自動アップロードなし）':'未ログイン')}catch(e){}}
-function saveCloudConfigUi(extra={}){const old=JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY)||'{}');const c={...old,url:cloudProjectUrl?.value?.trim(),key:cloudPublishableKey?.value?.trim(),email:cloudEmail?.value?.trim(),...extra};localStorage.setItem(CLOUD_CONFIG_KEY,JSON.stringify(c));return c}
+const CLOUD_CONFIG_KEY='card_nexus_cloud_session_v2';let cloudUploading=false;
+function appCloudConfig(){
+  const a=window.CARD_NEXUS_CONFIG||{};
+  return {url:String(a.supabaseUrl||'').replace(/\/$/,''),key:String(a.supabasePublishableKey||''),bucket:String(a.storageBucket||''),configRevision:Number(a.configRevision||0)};
+}
+function loadCloudConfigUi(){
+  try{
+    const base=appCloudConfig();
+    const session=JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY)||'{}');
+    if(document.getElementById('cloudProjectUrl'))cloudProjectUrl.value=base.url;
+    if(document.getElementById('cloudPublishableKey'))cloudPublishableKey.value=base.key;
+    if(document.getElementById('cloudStorageBucket'))cloudStorageBucket.value=base.bucket;
+    if(document.getElementById('cloudEmail'))cloudEmail.value=session.email||'';
+    const sameConfig=session.configRevision===base.configRevision&&session.url===base.url&&session.bucket===base.bucket;
+    updateCloudStatus(sameConfig&&session.access_token?'ログイン済み（共通設定 v'+base.configRevision+'）':'未ログイン');
+  }catch(e){updateCloudStatus('共通設定の読み込みに失敗しました：'+e.message)}
+}
+function saveCloudConfigUi(extra={}){
+  const base=appCloudConfig();
+  if(!base.url||!base.key||!base.bucket)throw new Error('config.js のSupabase設定が不足しています');
+  const old=JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY)||'{}');
+  const sameConfig=old.configRevision===base.configRevision&&old.url===base.url&&old.bucket===base.bucket;
+  const c={...(sameConfig?old:{}),url:base.url,key:base.key,bucket:base.bucket,configRevision:base.configRevision,email:cloudEmail?.value?.trim()||old.email||'',...extra};
+  localStorage.setItem(CLOUD_CONFIG_KEY,JSON.stringify(c));return c;
+}
 function updateCloudStatus(msg,ok=false){const el=document.getElementById('cloudSyncStatus');if(el){el.textContent=msg;el.style.color=ok?'#15803d':''}}
 async function cloudSignIn(){try{const c=saveCloudConfigUi();updateCloudStatus('ログイン中…');const r=await fetch(`${c.url}/auth/v1/token?grant_type=password`,{method:'POST',headers:{apikey:c.key,'Content-Type':'application/json'},body:JSON.stringify({email:cloudEmail.value.trim(),password:cloudPassword.value})});const d=await r.json();if(!r.ok)throw new Error(d.msg||d.error_description||'ログイン失敗');saveCloudConfigUi({access_token:d.access_token,refresh_token:d.refresh_token,user_id:d.user?.id});cloudPassword.value='';updateCloudStatus('ログインしました。自動アップロードは行いません',true)}catch(e){updateCloudStatus(`ログイン失敗：${e.message}`)}}
 async function buildCloudBackup(){const images={};for(const p of state.products){const image=await getProductImage(p.id);if(image)images[p.id]=image}return {...state,dataVersion:14,backupVersion:3,exportedAt:nowISO(),cloudUpdatedAt:nowISO(),images}}
 function cloudCounts(data){return {products:Array.isArray(data?.products)?data.products.length:0,history:Array.isArray(data?.history)?data.history.length:0,sales:Array.isArray(data?.sales)?data.sales.length:0}}
 function requireCloudConfig(){const c=saveCloudConfigUi();if(!c.access_token||!c.user_id)throw new Error('先にログインしてください');return c}
-async function fetchCloudBackup(allowMissing=false){const c=requireCloudConfig();const path=`${c.user_id}/latest.json`;const r=await fetch(`${c.url}/storage/v1/object/tc-backups/${path}`,{headers:{apikey:c.key,Authorization:`Bearer ${c.access_token}`}});if(r.status===404&&allowMissing)return null;if(!r.ok)throw new Error((await r.text())||'クラウド読込失敗');return r.json()}
+async function cloudResponseError(r,c,operation){const raw=await r.text();let msg=raw;try{const j=JSON.parse(raw);msg=j.message||j.error||raw}catch(_e){}if(r.status===404&&/bucket not found/i.test(msg))throw new Error(`Storage Bucket「${c.bucket}」がSupabase Project ${new URL(c.url).host} に見つかりません。config.jsのProject URLとBucket名を確認してください。`);throw new Error(`${operation}失敗（HTTP ${r.status}）：${msg||'詳細なし'}`)}
+async function fetchCloudBackup(allowMissing=false){const c=requireCloudConfig();const path=`${c.user_id}/latest.json`;const r=await fetch(`${c.url}/storage/v1/object/${encodeURIComponent(c.bucket)}/${path}`,{headers:{apikey:c.key,Authorization:`Bearer ${c.access_token}`}});if(r.status===404){const raw=await r.clone().text();if(!/bucket not found/i.test(raw)&&allowMissing)return null}if(!r.ok)return cloudResponseError(r,c,'クラウド読込');return r.json()}
 async function cloudInspect(){try{updateCloudStatus('クラウド確認中…');const remote=await fetchCloudBackup(true);const l=cloudCounts(state);renderCloudDiff(state,remote);if(!remote){updateCloudStatus(`クラウドデータなし／PC 商品${l.products}・履歴${l.history}`,true);addSyncLog('クラウド確認','成功',`Cloudなし／PC 商品${l.products}・履歴${l.history}`);return}const r=cloudCounts(remote);updateCloudStatus(`比較：PC 商品${l.products}・履歴${l.history} ／ Cloud 商品${r.products}・履歴${r.history}`,true);addSyncLog('クラウド確認','成功',`PC 商品${l.products}・履歴${l.history}／Cloud 商品${r.products}・履歴${r.history}`)}catch(e){updateCloudStatus(`確認失敗：${e.message}`);addSyncLog('クラウド確認','失敗',e.message)}}
-async function uploadCloudObject(c,path,body){const r=await fetch(`${c.url}/storage/v1/object/tc-backups/${path}`,{method:'POST',headers:{apikey:c.key,Authorization:`Bearer ${c.access_token}`,'Content-Type':'application/json','x-upsert':'true'},body});if(!r.ok)throw new Error((await r.text())||'アップロード失敗')}
+async function uploadCloudObject(c,path,body){const r=await fetch(`${c.url}/storage/v1/object/${encodeURIComponent(c.bucket)}/${path}`,{method:'POST',headers:{apikey:c.key,Authorization:`Bearer ${c.access_token}`,'Content-Type':'application/json','x-upsert':'true'},body});if(!r.ok)return cloudResponseError(r,c,'アップロード')}
 async function cloudUploadNow(showAlert=false){if(cloudUploading)return;try{cloudUploading=true;const c=requireCloudConfig();const local=cloudCounts(state);if(local.products===0&&local.history===0)throw new Error('商品0件・履歴0件のため、安全装置がアップロードを禁止しました');updateCloudStatus('同期前バックアップ作成中…');await createSafetyBackup();const remote=await fetchCloudBackup(true);const rc=cloudCounts(remote);const warning=remote?`PC：商品${local.products}件・履歴${local.history}件\nCloud：商品${rc.products}件・履歴${rc.history}件`:`PC：商品${local.products}件・履歴${local.history}件\nCloud：データなし`;if(!confirm(`${warning}\n\nクラウドへアップロードしますか？\n現在のクラウドデータは世代バックアップ後に更新します。`)){updateCloudStatus('アップロードをキャンセルしました');return}updateCloudStatus('安全アップロード中…');const stamp=new Date().toISOString().replace(/[:.]/g,'-');if(remote)await uploadCloudObject(c,`${c.user_id}/versions/cloud-before-${stamp}.json`,JSON.stringify(remote));const backup=await buildCloudBackup();const body=JSON.stringify(backup);await uploadCloudObject(c,`${c.user_id}/versions/pc-${stamp}.json`,body);await uploadCloudObject(c,`${c.user_id}/latest.json`,body);updateCloudStatus(`安全同期完了 ${new Date().toLocaleTimeString('ja-JP')}`,true);addSyncLog('PC→Cloud','成功',`商品${local.products}件・履歴${local.history}件`);renderCloudDiff(state,backup);if(showAlert)alert('クラウドへ安全にアップロードしました')}catch(e){updateCloudStatus(`同期失敗：${e.message}`);addSyncLog('PC→Cloud','失敗',e.message);if(showAlert)alert(e.message)}finally{cloudUploading=false}}
 async function cloudRestoreNow(){try{const remote=await fetchCloudBackup(false);const rc=cloudCounts(remote);if(rc.products===0&&rc.history===0)throw new Error('クラウドデータが空のため復元を中止しました');const lc=cloudCounts(state);if(!confirm(`クラウドから復元します。\nPC：商品${lc.products}件・履歴${lc.history}件\nCloud：商品${rc.products}件・履歴${rc.history}件\n\n現在のPCデータを自動バックアップしてから置き換えますか？`))return;await createSafetyBackup();state={...structuredClone(initialState),...remote,settings:{...initialState.settings,...(remote.settings||{})},products:(remote.products||[]).map((p,i)=>({...p,cardType:p.cardType||'ポケモンカード',favorite:!!p.favorite,sortOrder:Number.isFinite(p.sortOrder)?p.sortOrder:i})),sales:Array.isArray(remote.sales)?remote.sales:[],history:Array.isArray(remote.history)?remote.history:[],portfolioSnapshots:Array.isArray(remote.portfolioSnapshots)?remote.portfolioSnapshots:[],dataVersion:14};const images=remote.images&&typeof remote.images==='object'?remote.images:{};for(const [productId,imageData] of Object.entries(images)){if(typeof imageData==='string'&&imageData.startsWith('data:image/'))await putProductImage(productId,imageData)}saveState();updateCloudStatus('クラウドから復元しました',true);addSyncLog('Cloud→PC','成功',`商品${rc.products}件・履歴${rc.history}件`);renderCloudDiff(state,remote);alert(`復元しました（商品${rc.products}件・履歴${rc.history}件）`)}catch(e){updateCloudStatus(`復元失敗：${e.message}`);addSyncLog('Cloud→PC','失敗',e.message);alert(e.message)}}
 
