@@ -3,9 +3,9 @@
 // Publishable/anon keys are intended for client apps. Never place a service_role key here.
 window.CARD_NEXUS_CONFIG = Object.freeze({
   appName: "Card Nexus",
-  version: "15.0.0",
+  version: "15.0.1",
   supabaseUrl: "https://xvecmqbsiljlyjtastwh.supabase.co",
   supabasePublishableKey: "sb_publishable_mMTAuijlD8OsFl-ZrwRaDA_8CW6UguT",
   storageBucket: "tc-backups",
-  configRevision: 1
+  configRevision: 2
 });

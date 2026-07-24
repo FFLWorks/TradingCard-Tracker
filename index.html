@@ -182,7 +182,7 @@
   <div class="topbar">
     <div>
       <h1><button class="app-title-button" onclick="goDashboardTop()">Card Nexus</button></h1>
-      <div class="sub">資産管理・価格履歴・想定手取り・売却判断　v15.0.0</div>
+      <div class="sub">資産管理・価格履歴・想定手取り・売却判断　v15.0.1</div>
     </div>
     <div class="top-actions"><div class="mode-switch" aria-label="表示モード"><button id="marketModeBtn" onclick="setDisplayMode('market')">市場価格</button><button id="netModeBtn" onclick="setDisplayMode('net')">手取り</button></div><div class="pill" id="lastUpdatedPill">未更新</div></div>
   </div>
@@ -311,7 +311,7 @@
   </section>
 
   <section id="settings" class="view">
-    <div class="section-title"><h2>設定 <small style="font-size:13px;color:var(--muted);font-weight:600">Card Nexus v15.0.0</small></h2></div>
+    <div class="section-title"><h2>設定 <small style="font-size:13px;color:var(--muted);font-weight:600">Card Nexus v15.0.1</small></h2></div>
     <div class="card">
       <div class="form-grid two-col">
         <div><label>販売手数料（%）</label><input id="feePercent" type="number" step="0.1" min="0"></div>
@@ -1566,7 +1566,54 @@ async function fetchCloudBackup(allowMissing=false){const c=requireCloudConfig()
 async function cloudInspect(){try{updateCloudStatus('クラウド確認中…');const remote=await fetchCloudBackup(true);const l=cloudCounts(state);renderCloudDiff(state,remote);if(!remote){updateCloudStatus(`クラウドデータなし／PC 商品${l.products}・履歴${l.history}`,true);addSyncLog('クラウド確認','成功',`Cloudなし／PC 商品${l.products}・履歴${l.history}`);return}const r=cloudCounts(remote);updateCloudStatus(`比較：PC 商品${l.products}・履歴${l.history} ／ Cloud 商品${r.products}・履歴${r.history}`,true);addSyncLog('クラウド確認','成功',`PC 商品${l.products}・履歴${l.history}／Cloud 商品${r.products}・履歴${r.history}`)}catch(e){updateCloudStatus(`確認失敗：${e.message}`);addSyncLog('クラウド確認','失敗',e.message)}}
 async function uploadCloudObject(c,path,body){const r=await fetch(`${c.url}/storage/v1/object/${encodeURIComponent(c.bucket)}/${path}`,{method:'POST',headers:{apikey:c.key,Authorization:`Bearer ${c.access_token}`,'Content-Type':'application/json','x-upsert':'true'},body});if(!r.ok)return cloudResponseError(r,c,'アップロード')}
 async function cloudUploadNow(showAlert=false){if(cloudUploading)return;try{cloudUploading=true;const c=requireCloudConfig();const local=cloudCounts(state);if(local.products===0&&local.history===0)throw new Error('商品0件・履歴0件のため、安全装置がアップロードを禁止しました');updateCloudStatus('同期前バックアップ作成中…');await createSafetyBackup();const remote=await fetchCloudBackup(true);const rc=cloudCounts(remote);const warning=remote?`PC：商品${local.products}件・履歴${local.history}件\nCloud：商品${rc.products}件・履歴${rc.history}件`:`PC：商品${local.products}件・履歴${local.history}件\nCloud：データなし`;if(!confirm(`${warning}\n\nクラウドへアップロードしますか？\n現在のクラウドデータは世代バックアップ後に更新します。`)){updateCloudStatus('アップロードをキャンセルしました');return}updateCloudStatus('安全アップロード中…');const stamp=new Date().toISOString().replace(/[:.]/g,'-');if(remote)await uploadCloudObject(c,`${c.user_id}/versions/cloud-before-${stamp}.json`,JSON.stringify(remote));const backup=await buildCloudBackup();const body=JSON.stringify(backup);await uploadCloudObject(c,`${c.user_id}/versions/pc-${stamp}.json`,body);await uploadCloudObject(c,`${c.user_id}/latest.json`,body);updateCloudStatus(`安全同期完了 ${new Date().toLocaleTimeString('ja-JP')}`,true);addSyncLog('PC→Cloud','成功',`商品${local.products}件・履歴${local.history}件`);renderCloudDiff(state,backup);if(showAlert)alert('クラウドへ安全にアップロードしました')}catch(e){updateCloudStatus(`同期失敗：${e.message}`);addSyncLog('PC→Cloud','失敗',e.message);if(showAlert)alert(e.message)}finally{cloudUploading=false}}
-async function cloudRestoreNow(){try{const remote=await fetchCloudBackup(false);const rc=cloudCounts(remote);if(rc.products===0&&rc.history===0)throw new Error('クラウドデータが空のため復元を中止しました');const lc=cloudCounts(state);if(!confirm(`クラウドから復元します。\nPC：商品${lc.products}件・履歴${lc.history}件\nCloud：商品${rc.products}件・履歴${rc.history}件\n\n現在のPCデータを自動バックアップしてから置き換えますか？`))return;await createSafetyBackup();state={...structuredClone(initialState),...remote,settings:{...initialState.settings,...(remote.settings||{})},products:(remote.products||[]).map((p,i)=>({...p,cardType:p.cardType||'ポケモンカード',favorite:!!p.favorite,sortOrder:Number.isFinite(p.sortOrder)?p.sortOrder:i})),sales:Array.isArray(remote.sales)?remote.sales:[],history:Array.isArray(remote.history)?remote.history:[],portfolioSnapshots:Array.isArray(remote.portfolioSnapshots)?remote.portfolioSnapshots:[],dataVersion:14};const images=remote.images&&typeof remote.images==='object'?remote.images:{};for(const [productId,imageData] of Object.entries(images)){if(typeof imageData==='string'&&imageData.startsWith('data:image/'))await putProductImage(productId,imageData)}saveState();updateCloudStatus('クラウドから復元しました',true);addSyncLog('Cloud→PC','成功',`商品${rc.products}件・履歴${rc.history}件`);renderCloudDiff(state,remote);alert(`復元しました（商品${rc.products}件・履歴${rc.history}件）`)}catch(e){updateCloudStatus(`復元失敗：${e.message}`);addSyncLog('Cloud→PC','失敗',e.message);alert(e.message)}}
+async function cloudRestoreNow(){
+  try{
+    const remote=await fetchCloudBackup(false);
+    const rc=cloudCounts(remote);
+    if(rc.products===0&&rc.history===0)throw new Error('クラウドデータが空のため復元を中止しました');
+    const lc=cloudCounts(state);
+    if(!confirm(`クラウドから復元します。\nPC：商品${lc.products}件・履歴${lc.history}件\nCloud：商品${rc.products}件・履歴${rc.history}件\n\n現在のPCデータを自動バックアップしてから置き換えますか？`))return;
+    await createSafetyBackup();
+
+    // 画像は容量が大きいため localStorage の state には絶対に含めない。
+    // クラウドJSONの images を state に展開すると、スマホで QuotaExceededError が発生していた。
+    const {images:remoteImages,_cloudMeta,...remoteState}=remote||{};
+    state={
+      ...structuredClone(initialState),
+      ...remoteState,
+      settings:{...initialState.settings,...(remoteState.settings||{})},
+      products:(remoteState.products||[]).map((p,i)=>({...p,cardType:p.cardType||'ポケモンカード',favorite:!!p.favorite,sortOrder:Number.isFinite(p.sortOrder)?p.sortOrder:i})),
+      sales:Array.isArray(remoteState.sales)?remoteState.sales:[],
+      history:Array.isArray(remoteState.history)?remoteState.history:[],
+      portfolioSnapshots:Array.isArray(remoteState.portfolioSnapshots)?remoteState.portfolioSnapshots:[],
+      dataVersion:14
+    };
+    delete state.images;
+
+    // まず軽量な本体データを保存し、その後画像をIndexedDBへ個別保存する。
+    saveState();
+    const images=remoteImages&&typeof remoteImages==='object'?remoteImages:{};
+    let imageSaved=0,imageFailed=0;
+    for(const [productId,imageData] of Object.entries(images)){
+      if(typeof imageData!=='string'||!imageData.startsWith('data:image/'))continue;
+      try{await putProductImage(productId,imageData);imageSaved++}catch(err){imageFailed++;console.error('画像復元失敗',productId,err)}
+    }
+    renderAll();
+    updateCloudStatus(imageFailed?`本体復元完了（画像 ${imageSaved}件成功・${imageFailed}件失敗）`:'クラウドから復元しました',true);
+    addSyncLog('Cloud→PC','成功',`商品${rc.products}件・履歴${rc.history}件・画像${imageSaved}件${imageFailed?`（失敗${imageFailed}件）`:''}`);
+    renderCloudDiff(state,remote);
+    alert(`復元しました（商品${rc.products}件・履歴${rc.history}件${Object.keys(images).length?`・画像${imageSaved}件`:''}）`);
+  }catch(e){
+    const name=e?.name||'';
+    const detail=e?.message||String(e)||'詳細不明';
+    const msg=name==='QuotaExceededError'||/quota/i.test(detail)
+      ?'端末の保存容量を超えました。今回の修正版では画像を本体データから分離しています。ブラウザを再読み込みして、もう一度復元してください。'
+      :detail;
+    updateCloudStatus(`復元失敗：${msg}`);
+    addSyncLog('Cloud→PC','失敗',`${name?name+'：':''}${msg}`);
+    alert(msg);
+  }
+}
 
 renderAll();toggleCustomRange('portfolio');toggleCustomRange('history');
 
